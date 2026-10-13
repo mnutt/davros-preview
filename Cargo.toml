@@ -1,0 +1,23 @@
+[package]
+name = "davros-preview"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+office_oxide = { path = "vendor/office_oxide-0.1.13", default-features = false }
+tempfile = "3"
+docxide-pdf = { path = "vendor/docxide-pdf-0.17.1", default-features = false }
+office2pdf = { path = "vendor/office2pdf-0.8.1", default-features = false }
+zip = { version = "0.6", default-features = false, features = ["deflate"] }
+libc = "0.2"
+
+[patch.crates-io]
+umya-spreadsheet = { path = "vendor/umya-spreadsheet-2.3.3" }
+
+[profile.release]
+opt-level = "s"
+lto = "thin"
+codegen-units = 1
+strip = "symbols"
+panic = "abort"

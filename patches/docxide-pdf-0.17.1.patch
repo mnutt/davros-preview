@@ -1,0 +1,25 @@
+--- a/src/fonts/discovery.rs
++++ b/src/fonts/discovery.rs
+@@ -42,6 +42,9 @@
+ }
+ 
+ fn font_directories() -> Vec<PathBuf> {
++    if let Some(paths) = env::var_os("DAVROS_PREVIEW_FONTS") {
++        return env::split_paths(&paths).collect();
++    }
+     let mut dirs = Vec::new();
+ 
+     // DOCXSIDE_FONTS added first = LOWEST priority (LIFO stack pops these last; the
+@@ -231,6 +234,12 @@
+ ) -> Option<(PathBuf, u32, bool)> {
+     let index = get_font_index();
+     let key = font_name.to_lowercase();
++    let key = match key.as_str() {
++        "arial" | "helvetica" | "calibri" | "aptos" | "sans-serif" => "liberation sans".to_string(),
++        "times new roman" | "times" | "cambria" | "serif" => "liberation serif".to_string(),
++        "courier new" | "courier" | "consolas" | "monospace" => "liberation mono".to_string(),
++        _ => key,
++    };
+     if let Some((path, face_index)) = index.get(&(key.clone(), bold, italic)) {
+         return Some((path.clone(), *face_index, true));
+     }

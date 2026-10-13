@@ -1,0 +1,229 @@
+--- a/src/helper/number_format/number_formater.rs
++++ b/src/helper/number_format/number_formater.rs
+@@ -133,8 +133,7 @@
+         if right_value == "0" {
+             right_value = right.to_string();
+         } else if right.len() > right_value.len() {
+-            let pow = 10i32.pow(right.len() as u32);
+-            right_value = format!("{}", right_value.parse::<i32>().unwrap() * pow);
++            right_value.push_str(&"0".repeat(right.len() - right_value.len()));
+         } else {
+             let mut right_value_conv: String = right_value.chars().take(right.len()).collect();
+             let ajst_str: String = right_value.chars().skip(right.len()).take(1).collect();
+--- a/src/helper/number_format/percentage_formater.rs
++++ b/src/helper/number_format/percentage_formater.rs
+@@ -11,7 +11,7 @@
+     };
+     value = format!(
+         "{:0width$.len$}%",
+-        (100f64 * &value.parse::<f64>().unwrap()).round(),
++        (100f64 * &value.parse::<f64>().unwrap() * 10f64.powi(len as i32)).round() / 10f64.powi(len as i32),
+         width = 1,
+         len = len
+     );
+--- a/src/reader/driver.rs
++++ b/src/reader/driver.rs
+@@ -93,3 +93,54 @@
+ pub(crate) fn get_attribute_value(attr: &Attribute) -> Result<String, FromUtf8Error> {
+     String::from_utf8(attr.value.to_vec())
+ }
++
++// The model readers match unprefixed SpreadsheetML names. Adapt the XML stream
++// once at the boundary, resolving namespace URIs (including scoped/rebound
++// prefixes), rather than stripping arbitrary prefixes in hundreds of matches.
++pub(crate) struct SpreadsheetXml<R> {
++    reader: quick_xml::NsReader<R>,
++    buffer: Vec<u8>,
++    pending: std::io::Cursor<Vec<u8>>,
++}
++
++pub(crate) fn xml_reader<R: std::io::BufRead>(input: R) -> quick_xml::Reader<std::io::BufReader<SpreadsheetXml<R>>> {
++    quick_xml::Reader::from_reader(std::io::BufReader::new(SpreadsheetXml {
++        reader: quick_xml::NsReader::from_reader(input),
++        buffer: Vec::new(),
++        pending: std::io::Cursor::new(Vec::new()),
++    }))
++}
++
++impl<R: std::io::BufRead> std::io::Read for SpreadsheetXml<R> {
++    fn read(&mut self, output: &mut [u8]) -> std::io::Result<usize> {
++        use quick_xml::{events::{BytesEnd, Event}, name::ResolveResult, Writer};
++        const MAIN: &[u8] = b"http://schemas.openxmlformats.org/spreadsheetml/2006/main";
++        if output.is_empty() { return Ok(0); }
++        loop {
++            let count = std::io::Read::read(&mut self.pending, output)?;
++            if count != 0 { return Ok(count); }
++            self.buffer.clear();
++            let (namespace, mut event) = self.reader.read_resolved_event_into(&mut self.buffer)
++                .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
++            if matches!(event, Event::Eof) { return Ok(0); }
++            if matches!(namespace, ResolveResult::Bound(ns) if ns.as_ref() == MAIN) {
++                match &mut event {
++                    Event::Start(start) | Event::Empty(start) => {
++                        let local = start.local_name().as_ref().to_vec();
++                        start.set_name(&local);
++                    }
++                    Event::End(end) => {
++                        let local = std::str::from_utf8(end.local_name().as_ref())
++                            .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?
++                            .to_owned();
++                        *end = BytesEnd::new(local);
++                    }
++                    _ => {}
++                }
++            }
++            self.pending.set_position(0);
++            self.pending.get_mut().clear();
++            Writer::new(self.pending.get_mut()).write_event(event)?;
++        }
++    }
++}
+--- a/src/reader/xlsx/workbook.rs
++++ b/src/reader/xlsx/workbook.rs
+@@ -4,7 +4,7 @@
+ use super::XlsxError;
+ use quick_xml::escape;
+ use quick_xml::events::Event;
+-use quick_xml::Reader;
++use crate::reader::driver::xml_reader;
+ use std::{io, result};
+ 
+ use crate::helper::const_str::*;
+@@ -18,7 +18,7 @@
+     arv: &mut zip::read::ZipArchive<R>,
+ ) -> result::Result<Spreadsheet, XlsxError> {
+     let r = io::BufReader::new(arv.by_name(PKG_WORKBOOK)?);
+-    let mut reader = Reader::from_reader(r);
++    let mut reader = xml_reader(r);
+     reader.config_mut().trim_text(true);
+     let mut spreadsheet = Spreadsheet::default();
+ 
+--- a/src/reader/xlsx/worksheet.rs
++++ b/src/reader/xlsx/worksheet.rs
+@@ -1,7 +1,7 @@
+ use super::driver::*;
+ use super::XlsxError;
+ use quick_xml::events::Event;
+-use quick_xml::Reader;
++use crate::reader::driver::xml_reader;
+ use std::collections::HashMap;
+ 
+ use crate::helper::formula::*;
+@@ -27,7 +27,7 @@
+     stylesheet: &Stylesheet,
+ ) -> Result<(), XlsxError> {
+     let data = std::io::Cursor::new(raw_data_of_worksheet.get_worksheet_file().get_file_data());
+-    let mut reader = Reader::from_reader(data);
++    let mut reader = xml_reader(data);
+     reader.config_mut().trim_text(true);
+     let mut formula_shared_list: HashMap<u32, (String, Vec<FormulaToken>)> = HashMap::new();
+     xml_read_loop!(
+@@ -224,7 +224,7 @@
+     stylesheet: &Stylesheet,
+ ) -> Result<Cells, XlsxError> {
+     let data = std::io::Cursor::new(raw_data_of_worksheet.get_worksheet_file().get_file_data());
+-    let mut reader = Reader::from_reader(data);
++    let mut reader = xml_reader(data);
+     reader.config_mut().trim_text(true);
+ 
+     let mut cells = Cells::default();
+--- a/src/reader/xlsx/styles.rs
++++ b/src/reader/xlsx/styles.rs
+@@ -5,7 +5,7 @@
+ use crate::structs::Spreadsheet;
+ use crate::structs::Stylesheet;
+ use quick_xml::events::Event;
+-use quick_xml::Reader;
++use crate::reader::driver::xml_reader;
+ use std::{io, result};
+ 
+ pub fn read<R: io::Read + io::Seek>(
+@@ -13,7 +13,7 @@
+     spreadsheet: &mut Spreadsheet,
+ ) -> result::Result<(), XlsxError> {
+     let r = io::BufReader::new(arv.by_name(PKG_STYLES)?);
+-    let mut reader = Reader::from_reader(r);
++    let mut reader = xml_reader(r);
+     reader.config_mut().trim_text(true);
+ 
+     let theme = spreadsheet.get_theme().clone();
+--- a/src/reader/xlsx/shared_strings.rs
++++ b/src/reader/xlsx/shared_strings.rs
+@@ -5,7 +5,7 @@
+ use crate::structs::SharedStringTable;
+ use crate::structs::Spreadsheet;
+ use quick_xml::events::Event;
+-use quick_xml::Reader;
++use crate::reader::driver::xml_reader;
+ use std::{io, result};
+ 
+ pub(crate) fn read<R: io::Read + io::Seek>(
+@@ -21,7 +21,7 @@
+             return Err(e.into());
+         }
+     });
+-    let mut reader = Reader::from_reader(r);
++    let mut reader = xml_reader(r);
+     reader.config_mut().trim_text(false);
+ 
+     xml_read_loop!(
+--- a/src/reader/xlsx/table.rs
++++ b/src/reader/xlsx/table.rs
+@@ -5,7 +5,7 @@
+ use crate::structs::Worksheet;
+ use crate::structs::{Table, TableColumn, TableStyleInfo};
+ use quick_xml::events::Event;
+-use quick_xml::Reader;
++use crate::reader::driver::xml_reader;
+ use std::result;
+ 
+ pub(crate) fn read(
+@@ -13,7 +13,7 @@
+     table_file: &RawFile,
+ ) -> result::Result<(), XlsxError> {
+     let data = std::io::Cursor::new(table_file.get_file_data());
+-    let mut reader = Reader::from_reader(data);
++    let mut reader = xml_reader(data);
+     reader.config_mut().trim_text(false);
+     let mut buf = Vec::new();
+     let mut table = Table::default();
+--- a/src/reader/xlsx/comment.rs
++++ b/src/reader/xlsx/comment.rs
+@@ -4,7 +4,7 @@
+ use crate::structs::Worksheet;
+ use crate::xml_read_loop;
+ use quick_xml::events::Event;
+-use quick_xml::Reader;
++use crate::reader::driver::xml_reader;
+ use std::result;
+ 
+ pub(crate) fn read(
+@@ -12,7 +12,7 @@
+     drawing_file: &RawFile,
+ ) -> result::Result<(), XlsxError> {
+     let data = std::io::Cursor::new(drawing_file.get_file_data());
+-    let mut reader = Reader::from_reader(data);
++    let mut reader = xml_reader(data);
+     reader.config_mut().trim_text(false);
+ 
+     let mut authors: Vec<String> = Vec::new();
+--- a/src/reader/xlsx/pivot_table.rs
++++ b/src/reader/xlsx/pivot_table.rs
+@@ -5,7 +5,7 @@
+ use crate::structs::PivotTableDefinition;
+ use crate::structs::Worksheet;
+ use quick_xml::events::Event;
+-use quick_xml::Reader;
++use crate::reader::driver::xml_reader;
+ use std::result;
+ 
+ pub(crate) fn read(
+@@ -13,7 +13,7 @@
+     pivot_table_file: &RawFile,
+ ) -> result::Result<(), XlsxError> {
+     let data = std::io::Cursor::new(pivot_table_file.get_file_data());
+-    let mut reader = Reader::from_reader(data);
++    let mut reader = xml_reader(data);
+     reader.config_mut().trim_text(false);
+     let mut buf = Vec::new();
+     let mut pivot_table = PivotTable::default();

@@ -1,0 +1,9 @@
+The basic.doc, basic.xls, and basic.ppt fixtures were generated from the adjacent
+synthetic OOXML fixtures with LibreOffice 26.2.5.2. They contain no user documents.
+Regenerate from the repository root (LibreOffice is not needed for normal tests):
+
+libreoffice -env:UserInstallation=file:///tmp/davros-fixture-profile --headless --convert-to doc --outdir tests/fixtures tests/fixtures/basic.docx
+libreoffice -env:UserInstallation=file:///tmp/davros-fixture-profile --headless --convert-to xls --outdir tests/fixtures tests/fixtures/basic.xlsx
+libreoffice -env:UserInstallation=file:///tmp/davros-fixture-profile --headless --convert-to ppt --outdir tests/fixtures tests/fixtures/basic.pptx
+
+These exercise parsing and selectable PDF text, not reference layout fidelity.

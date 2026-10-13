@@ -1,0 +1,6 @@
+/vendor/
+/target/
+/output/
+/dist/
+/tmp/
+__pycache__/

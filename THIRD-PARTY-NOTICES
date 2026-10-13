@@ -1,0 +1,22 @@
+Davros document preview converters
+
+docxide-pdf 0.17.1: Apache-2.0 (locally modified)
+https://github.com/sverrejb/docxide-pdf
+Changes restrict font discovery and substitute the three Liberation families.
+
+office2pdf 0.8.1: Apache-2.0 (locally modified)
+https://github.com/developer0hye/office2pdf
+Changes remove DOCX dispatch and embedded fallback font packs, limit image codecs, and widen spreadsheet preview pages to keep columns together.
+
+umya-spreadsheet 2.3.3: MIT (locally modified)
+https://github.com/MathNya/umya-spreadsheet
+Changes fix fractional padding, percentage precision, and prefixed SpreadsheetML parsing.
+
+office_oxide 0.1.13: MIT OR Apache-2.0 (locally modified)
+https://github.com/yfedoseev/office_oxide
+Changes preserve explicit XLS column widths and row heights through OOXML conversion, including blank rows.
+
+Liberation Fonts: SIL Open Font License 1.1
+https://github.com/liberationfonts/liberation-fonts
+
+The complete dependency versions are recorded in Cargo.lock.

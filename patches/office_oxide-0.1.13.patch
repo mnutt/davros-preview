@@ -1,0 +1,312 @@
+--- a/src/convert_docx.rs
++++ b/src/convert_docx.rs
+@@ -2091,6 +2091,7 @@
+     }
+ 
+     Element::Table(Table {
++        column_widths_chars: Vec::new(),
+         rows: ir_rows,
+         column_widths_twips: table.grid.iter().map(|t| t.0.max(0) as u32).collect(),
+         border: tp
+--- a/src/convert_xls.rs
++++ b/src/convert_xls.rs
+@@ -83,8 +83,7 @@
+         let mut merges = merge_sweep(&sheet.merged_cells);
+         let mut links = hyperlink_sweep(&sheet.hyperlinks);
+         let mut rows = Vec::new();
+-        // Rows past the last one carrying data are padding; measuring the
+-        // sheet against them would report a truncation that dropped nothing.
++        // Keep rows carrying data or explicit height, including blank spacer rows.
+         let total_rows = sheet
+             .rows
+             .iter()
+@@ -95,7 +94,8 @@
+                 row.iter()
+                     .any(|cell_value| !matches!(cell_value, crate::xls::CellValue::Empty))
+             })
+-            .map_or(0, |i| i + 1);
++            .map_or(0, |i| i + 1)
++            .max(sheet.row_heights.last_key_value().map_or(0, |(&i, _)| i as usize + 1));
+         // Widest row, for clipping a merge's column span to the table.
+         let max_width = sheet
+             .rows
+@@ -110,7 +110,8 @@
+         // truncation.
+         let mut rows_scanned = 0usize;
+ 
+-        for (row_idx, row) in sheet.rows.iter().take(total_rows).enumerate() {
++        for row_idx in 0..total_rows {
++            let row = sheet.rows.get(row_idx).map(Vec::as_slice).unwrap_or(&[]);
+             if budget == 0 {
+                 break;
+             }
+@@ -175,12 +176,13 @@
+             rows.push(TableRow {
+                 cells,
+                 is_header: row_idx == 0,
++                height_twips: sheet.row_heights.get(&(row_idx as u16)).map(|&h| h as u32),
+                 ..Default::default()
+             });
+         }
+ 
+         // Trailing all-empty rows go the same way as trailing empty cells.
+-        while rows.last().is_some_and(|r| r.cells.is_empty()) {
++        while rows.last().is_some_and(|r| r.cells.is_empty() && r.height_twips.is_none()) {
+             rows.pop();
+         }
+ 
+@@ -188,6 +190,8 @@
+             Vec::new()
+         } else {
+             vec![Element::Table(Table {
++                column_widths_chars: sheet.column_widths.iter()
++                    .map(|w| w.map(|w| w as f64 / 256.0)).collect(),
+                 rows,
+                 ..Default::default()
+             })]
+--- a/src/create.rs
++++ b/src/create.rs
+@@ -588,6 +588,11 @@
+                             sheet.set_column_width(ci, w.clamp(3.0, 80.0));
+                         }
+                     }
++                    for (ci, width) in t.column_widths_chars.iter().enumerate() {
++                        if let Some(width) = width {
++                            sheet.set_column_width(ci, *width);
++                        }
++                    }
+                     // Columns currently claimed by a still-open vertical
+                     // merge anchored in an earlier row, mapped to how many
+                     // more rows (including the one about to be processed)
+@@ -603,6 +608,9 @@
+                     let mut active_spans: std::collections::BTreeMap<usize, usize> =
+                         std::collections::BTreeMap::new();
+                     for row in &t.rows {
++                        if let Some(height) = row.height_twips {
++                            sheet.set_row_height(row_cursor, height as f64 / 20.0);
++                        }
+                         let mut col = 0usize;
+                         for cell in &row.cells {
+                             while active_spans
+--- a/src/ir.rs
++++ b/src/ir.rs
+@@ -1411,6 +1411,10 @@
+ /// A table with rows and cells.
+ #[derive(Debug, Clone, PartialEq, Default, serde::Serialize, serde::Deserialize)]
+ pub struct Table {
++    /// Spreadsheet widths in character units. Kept separately from physical
++    /// table widths to avoid rounding through font-dependent twip conversion.
++    #[serde(default, skip_serializing_if = "Vec::is_empty")]
++    pub column_widths_chars: Vec<Option<f64>>,
+     /// Rows in the table (first row is header when `is_header = true`).
+     pub rows: Vec<TableRow>,
+     /// Column widths in twips (may be shorter than the actual column count).
+--- a/src/xls/workbook.rs
++++ b/src/xls/workbook.rs
+@@ -116,6 +116,10 @@
+     /// Padding the grid to the sheet's declared extent cost hundreds of
+     /// megabytes for a sheet with a few far-apart cells.
+     pub rows: Vec<Vec<CellValue>>,
++    /// Explicit BIFF column widths, in 1/256 character units (at most 256 columns).
++    pub column_widths: Vec<Option<u16>>,
++    /// BIFF row heights in twips, indexed by zero-based row.
++    pub row_heights: std::collections::BTreeMap<u16, u16>,
+     /// Each cell's `XF` index ([MS-XLS] §2.4.353), jagged exactly like
+     /// `rows`. Together with `formats` it is what [`Self::display_text`]
+     /// needs to render a number the way Excel shows it — a date serial as
+@@ -311,6 +315,8 @@
+         // Single-pass parsing: globals then sheets sequentially.
+         let mut phase = Phase::Globals;
+         let mut cells: Vec<Cell> = Vec::new();
++        let mut column_widths: Vec<Option<u16>> = Vec::new();
++        let mut row_heights = std::collections::BTreeMap::new();
+         let mut merged_cells: Vec<(u16, u16, u16, u16)> = Vec::new();
+         let mut conditional_formats: Vec<crate::ir::ConditionalFormat> = Vec::new();
+         // The active CONDFMT group: its resolved sqref, and how many CF
+@@ -585,6 +591,25 @@
+                     // cells they overwrote the worksheet's own A1:Cn with a
+                     // copy of whatever the chart plotted.
+                     _ if nested_bof_depth > 0 => {},
++                    // MS-XLS 2.4.53: ColInfo. Bounds prevent malformed ranges
++                    // from allocating outside the 256-column BIFF grid.
++                    0x007D if rec.data.len() >= 12 => {
++                        let first = u16::from_le_bytes([rec.data[0], rec.data[1]]) as usize;
++                        let last = u16::from_le_bytes([rec.data[2], rec.data[3]]) as usize;
++                        let width = u16::from_le_bytes([rec.data[4], rec.data[5]]);
++                        if first <= last && last < 256 && width <= 255 * 256 {
++                            column_widths.resize(column_widths.len().max(last + 1), None);
++                            column_widths[first..=last].fill(Some(width));
++                        }
++                    },
++                    // MS-XLS 2.4.221: Row. Heights use twips, not pixels.
++                    0x0208 if rec.data.len() >= 16 => {
++                        let row = u16::from_le_bytes([rec.data[0], rec.data[1]]);
++                        let height = u16::from_le_bytes([rec.data[6], rec.data[7]]);
++                        if (2..=8192).contains(&height) {
++                            row_heights.insert(row, height);
++                        }
++                    },
+                     RT_WSBOOL => {
+                         if rec.data.first().is_some_and(|b| b & WSBOOL_F_DIALOG != 0)
+                             && current_kind == Some(crate::ir::SheetKind::Worksheet)
+@@ -616,6 +641,8 @@
+                         sheets.push(Sheet {
+                             name,
+                             rows,
++                            column_widths: std::mem::take(&mut column_widths),
++                            row_heights: std::mem::take(&mut row_heights),
+                             xf,
+                             formats,
+                             kind: current_kind.unwrap_or_default(),
+@@ -1527,6 +1554,63 @@
+ mod tests {
+     use super::*;
+ 
++    #[test]
++    fn dimensions_survive_biff_to_xlsx() {
++        fn col(first: u16, last: u16, width: u16) -> Vec<u8> {
++            let mut d = vec![0; 12];
++            d[0..2].copy_from_slice(&first.to_le_bytes());
++            d[2..4].copy_from_slice(&last.to_le_bytes());
++            d[4..6].copy_from_slice(&width.to_le_bytes());
++            biff_rec(0x007D, &d)
++        }
++        fn row(index: u16, height: u16) -> Vec<u8> {
++            let mut d = vec![0; 16];
++            d[0..2].copy_from_slice(&index.to_le_bytes());
++            d[6..8].copy_from_slice(&height.to_le_bytes());
++            d[12] = 0x40; // fUnsynced: manually assigned height.
++            biff_rec(0x0208, &d)
++        }
++        let mut body = col(0, 1, 24 * 256 + 128);
++        body.extend(col(1, 1, 100 * 256)); // overwrite, wider than old writer's clamp
++        body.extend(col(3, 3, 128)); // preserve narrow columns too
++        body.extend(row(0, 600));
++        body.extend(row(2, 800)); // trailing blank row must retain its height
++        body.extend(number(0, 0, 0, 42.0));
++        // Invalid/truncated records must neither allocate large ranges nor overwrite valid data.
++        body.extend(col(5, 4, 256));
++        body.extend(col(0, u16::MAX, 256));
++        body.extend(biff_rec(0x007D, &[0; 5]));
++        body.extend(biff_rec(0x0208, &[0; 7]));
++        body.extend(row(0, u16::MAX));
++        // A nested chart's formatting is not the containing worksheet's.
++        body.extend(bof(0x0020));
++        body.extend(col(0, 0, 256));
++        body.extend(row(0, 200));
++        body.extend(eof());
++        let stream = workbook_stream(&[("Sized", 0, body), ("Default", 0, number(0, 0, 0, 7.0))]);
++        let doc = XlsDocument::parse_workbook_stream(&stream).unwrap();
++        assert_eq!(doc.sheets[0].column_widths, vec![Some(6272), Some(25600), None, Some(128)]);
++        assert_eq!(doc.sheets[0].row_heights.get(&0), Some(&600));
++        assert!(doc.sheets[1].column_widths.is_empty());
++        assert!(doc.sheets[1].row_heights.is_empty());
++        let ir = crate::convert_xls::xls_to_ir(&doc);
++        let mut out = std::io::Cursor::new(Vec::new());
++        crate::create::create_from_ir_to_writer(&ir, crate::format::DocumentFormat::Xlsx, &mut out).unwrap();
++        let mut zip = zip::ZipArchive::new(std::io::Cursor::new(out.into_inner())).unwrap();
++        let mut xml = String::new();
++        use std::io::Read;
++        zip.by_name("xl/worksheets/sheet1.xml").unwrap().read_to_string(&mut xml).unwrap();
++        assert!(xml.contains("width=\"24.5\""), "{xml}");
++        assert!(xml.contains("width=\"100\""), "{xml}");
++        assert!(xml.contains("width=\"0.5\""), "{xml}");
++        assert!(xml.contains("r=\"1\" ht=\"30\" customHeight=\"1\""), "{xml}");
++        assert!(xml.contains("r=\"3\" ht=\"40\" customHeight=\"1\""), "{xml}");
++        xml.clear();
++        zip.by_name("xl/worksheets/sheet2.xml").unwrap().read_to_string(&mut xml).unwrap();
++        assert!(!xml.contains("customHeight"));
++        assert!(!xml.contains("customWidth"));
++    }
++
+     // ── Hand-built BIFF8 fixtures ─────────────────────────────────────────
+     //
+     // The record-walking state machine is the part several of these tests
+--- a/src/xlsx/write.rs
++++ b/src/xlsx/write.rs
+@@ -408,6 +408,7 @@
+     pub name: String,
+     pub rows: Vec<Vec<Option<StoredCellInner>>>,
+     pub col_widths: HashMap<usize, f64>,
++    pub row_heights: HashMap<usize, f64>,
+     pub cell_styles: HashMap<(usize, usize), CellStyle>,
+     /// Merged cell regions: (row, col, row_span, col_span).
+     pub merge_regions: Vec<(usize, usize, usize, usize)>,
+@@ -438,6 +439,7 @@
+             name: name.to_string(),
+             rows: Vec::new(),
+             col_widths: HashMap::new(),
++            row_heights: HashMap::new(),
+             cell_styles: HashMap::new(),
+             merge_regions: Vec::new(),
+             page_setup: None,
+@@ -550,6 +552,16 @@
+         self
+     }
+ 
++    /// Set a row height in points, including rows without cell contents.
++    pub fn set_row_height(&mut self, row: usize, height: f64) -> &mut Self {
++        if in_grid(row, 0) && height.is_finite() && (0.0..=409.6).contains(&height) {
++            self.row_heights.insert(row, height);
++            if self.rows.len() <= row { self.rows.resize_with(row + 1, Vec::new); }
++        }
++        self
++    }
++
++    /// Set a column width in character units.
+     pub fn set_column_width(&mut self, col: usize, width: f64) -> &mut Self {
+         // `inf` is not a valid xsd:double lexical form and Excel caps width
+         // at 255; a non-finite or out-of-range value is dropped rather than
+@@ -772,7 +784,13 @@
+         self
+     }
+ 
+-    /// Set the width of a column in character units.
++    /// Set a row height in points, including rows without cell contents.
++    pub fn set_row_height(&mut self, row: usize, height: f64) -> &mut Self {
++        self.0.set_row_height(row, height);
++        self
++    }
++
++    /// Set a column width in character units.
+     pub fn set_column_width(&mut self, col: usize, width: f64) -> &mut Self {
+         self.0.set_column_width(col, width);
+         self
+@@ -1295,7 +1313,7 @@
+             for col_idx in &sorted_cols {
+                 let width = sheet.col_widths[col_idx];
+                 let col_num = (*col_idx + 1).to_string();
+-                let width_str = format!("{width:.2}");
++                let width_str = width.to_string();
+ 
+                 let mut col_elem = BytesStart::new("col");
+                 col_elem.push_attribute(("min", col_num.as_str()));
+@@ -1310,13 +1328,18 @@
+         w.write_event(Event::Start(BytesStart::new("sheetData")))?;
+ 
+         for (row_idx, row) in sheet.rows.iter().enumerate() {
+-            if row.is_empty() || row.iter().all(|c| c.is_none()) {
++            if row.iter().all(|c| c.is_none()) && !sheet.row_heights.contains_key(&row_idx) {
+                 continue;
+             }
+ 
+             let row_num = (row_idx + 1).to_string();
+             let mut row_elem = BytesStart::new("row");
+             row_elem.push_attribute(("r", row_num.as_str()));
++            let height = sheet.row_heights.get(&row_idx).map(|h| h.to_string());
++            if let Some(ref height) = height {
++                row_elem.push_attribute(("ht", height.as_str()));
++                row_elem.push_attribute(("customHeight", "1"));
++            }
+             w.write_event(Event::Start(row_elem))?;
+ 
+             for (col_idx, cell) in row.iter().enumerate() {
+@@ -2928,7 +2951,7 @@
+         for bad in ["inf", "NaN", "-5.00", "e30"] {
+             assert!(!xml.contains(bad), "wrote {bad} as a column width: {xml}");
+         }
+-        assert!(xml.contains("20.00"), "a valid width must survive: {xml}");
++        assert!(xml.contains("width=\"20\""), "a valid width must survive: {xml}");
+     }
+ 
+     /// `CT_Sheets` requires at least one `sheet`.

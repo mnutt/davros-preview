@@ -1,0 +1,65 @@
+--- a/src/lib.rs
++++ b/src/lib.rs
+@@ -37,7 +37,16 @@
+ //! std::fs::write("report.pdf", &result.pdf).unwrap();
+ //! ```
+ 
+-pub(crate) mod bundled_fonts;
++// Davros uses only the external Liberation fonts.
++pub(crate) mod bundled_fonts {
++    use typst::text::Font;
++    pub(crate) const NOTO_SERIF_FAMILY: &str = "Liberation Serif";
++    pub(crate) const NOTO_SANS_FAMILY: &str = "Liberation Sans";
++    pub(crate) const SELAWIK_FAMILY: &str = "Liberation Sans";
++    pub(crate) fn noto_serif_fonts() -> &'static [Font] { &[] }
++    pub(crate) fn noto_sans_fonts() -> &'static [Font] { &[] }
++    pub(crate) fn selawik_fonts() -> &'static [Font] { &[] }
++}
+ pub mod config;
+ pub(crate) mod defaults;
+ pub mod error;
+--- a/src/lib_pipeline.rs
++++ b/src/lib_pipeline.rs
+@@ -215,7 +215,7 @@
+         render::pdf::load_fonts_from_bytes(fonts.font_bytes())
+     });
+     let parser: Box<dyn Parser> = match format {
+-        Format::Docx => Box::new(parser::docx::DocxParser),
++        Format::Docx => return Err(ConvertError::UnsupportedFormat("DOCX uses docxide".into())),
+         Format::Pptx => Box::new(parser::pptx::PptxParser),
+         Format::Xlsx => Box::new(parser::xlsx::XlsxParser),
+     };
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -102,6 +102,8 @@
+ 
+ [dependencies.image]
+ version = "0.25"
++default-features = false
++features = ["png", "jpeg", "gif", "bmp", "tiff", "webp", "ico"]
+ 
+ [dependencies.lopdf]
+ version = "0.45"
+--- a/src/parser/xlsx_pagination.rs
++++ b/src/parser/xlsx_pagination.rs
+@@ -58,10 +58,18 @@
+ pub(super) fn split_sheet_page_by_width(
+     page: SheetPage,
+     title_columns: Option<(usize, usize)>,
+-    fit: SheetFit,
++    _fit: SheetFit,
+     header_footer_scales_with_doc: bool,
+ ) -> Vec<SheetPage> {
+-    let page: SheetPage = fit_page_to_pages(page, fit, header_footer_scales_with_doc);
++    // Davros previews keep columns together at their natural size. Ignore print
++    // scaling, widen the paper, and leave the existing vertical pagination intact.
++    let mut page = page;
++    let content_width: f64 = page.table.column_widths.iter().sum();
++    // One point of slack prevents floating-point rounding from splitting a column.
++    page.size.width = page.size.width.max(
++        (content_width + page.margins.left + page.margins.right).ceil() + 1.0,
++    );
++    let page: SheetPage = fit_page_to_pages(page, SheetFit::default(), header_footer_scales_with_doc);
+     let printable_width: f64 = page.size.width - page.margins.left - page.margins.right;
+     let total_width: f64 = page.table.column_widths.iter().sum();
+     if total_width <= printable_width || page.table.column_widths.len() <= 1 {
