@@ -34,6 +34,9 @@ The default is one Cargo job to accommodate small build VMs. Set
 upstream crate checksums before extracting and applying `patches/`; Cargo uses
 the checked-in lockfile. Dependencies are downloaded on the first build.
 
+[PATCHES.md](PATCHES.md) describes each logical dependency change, its regression
+coverage and limitations, and how to reassess it when upgrading upstream crates.
+
 `output/native-preview/` contains the runtime bundle. `dist/` contains
 `davros-preview-v0.1.0-linux-amd64.tar.gz` and its `.sha256` file. The archive
 contains a single `native-preview/` directory, matching Davros's existing output
@@ -94,7 +97,7 @@ integration is deliberately unchanged until that first release is published.
 
 ## Tests and legacy conversion
 
-`test.sh` runs the Office Oxide XLS dimensions patch regression and
+`test.sh` runs the Office Oxide unit suite (including our conversion regressions) and
 exercises the packaged executable, selectable text, spreadsheet
 number formatting, prefixed SpreadsheetML, wide-sheet pagination, malformed
 input, legacy conversion, temporary-file cleanup, and sandbox enforcement. The
@@ -109,20 +112,26 @@ for regeneration commands. LibreOffice is only needed to regenerate fixtures.
 Legacy previews preserve readable, selectable content but have incomplete layout
 fidelity, particularly slide positioning, images, charts, and styles. The XLS
 patch preserves explicit column widths and row heights, including blank rows;
-it does not fix default dimensions, visibility, or chart/image anchors.
+it does not fix default dimensions, visibility, or chart/image anchors. DOC normalization now preserves explicit page breaks,
+automatic footnote/endnote references, and PNG content/proportions. Structured
+DOC prose no longer gets promoted to invented headings. XLS conversion
+keeps numeric values and supported number/date formats, and untitled PPT slides
+stay untitled. Custom note marks, 1904/regional date-format fidelity, and original
+image placement still need work.
 
-For broader testing, useful upstream corpora include
-[Apache POI test-data](https://github.com/apache/poi/tree/trunk/test-data),
-[LibreOffice Writer](https://github.com/LibreOffice/core/tree/master/sw/qa/extras),
+The optional public corpus evaluation covers 41 pinned fixtures from
+[Apache POI](https://github.com/apache/poi/tree/trunk/test-data) and LibreOffice's
+[Writer](https://github.com/LibreOffice/core/tree/master/sw/qa/extras),
 [Calc](https://github.com/LibreOffice/core/tree/master/sc/qa/unit/data), and
-[Impress](https://github.com/LibreOffice/core/tree/master/sd/qa/unit/data).
-A future corpus runner should pin source revisions and file hashes, record
-conversion failures/time/memory, check content and geometry, and compare rendered
-pages against references. A successful parse is not a fidelity pass. These
-corpora have not yet been imported or run by this project.
+[Impress](https://github.com/LibreOffice/core/tree/master/sd/qa/unit/data) tests.
+It focuses on legacy DOC/XLS/PPT, with six modern controls and three encrypted
+inputs expected to be rejected. Downloads are checksum-verified and kept out of
+the runtime bundle and Git. See [tests/corpus/README.md](tests/corpus/README.md)
+for reproduction commands and [the baseline evaluation](tests/corpus/BASELINE.md)
+for findings. A successful conversion is not a fidelity pass.
 
 ## Licensing
 
-Project code is Apache-2.0, extracted from Davros. See `THIRD-PARTY-NOTICES` for
+Project code is Apache-2.0, extracted from Davros. See `THIRD_PARTY_NOTICES` for
 converter modifications. Runtime archives contain collected dependency notices
 and the Liberation font license. Office Oxide is MIT/Apache-2.0.

@@ -1,0 +1,4867 @@
+{
+  "created_utc": "2026-10-13T21:17:50.711486+00:00",
+  "manifest_sha256": "4ec11f11ca51a3e5664669fd073a55503bd5a55c4c45907abf020fd6c972f263",
+  "sources": {
+    "poi": {
+      "repository": "https://github.com/apache/poi",
+      "revision": "01fb738668df871190d4b9af339bab51a7ee199e",
+      "license_files": [
+        {
+          "path": "legal/LICENSE",
+          "sha256": "6e7c918e5a49f677c1b85a9eb2d035cd85c217fc42af6b4a336964a434001a9c"
+        },
+        {
+          "path": "legal/NOTICE",
+          "sha256": "a89ff8b670bcacd3e98ebee64979e0569181c7942e9ad795f4222b25e5637a61"
+        }
+      ]
+    },
+    "libreoffice": {
+      "repository": "https://github.com/LibreOffice/core",
+      "revision": "1eddacafd9f49d0342f91a14dd966207f045b164",
+      "license_files": [
+        {
+          "path": "COPYING",
+          "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903"
+        },
+        {
+          "path": "COPYING.MPL",
+          "sha256": "1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5"
+        },
+        {
+          "path": "COPYING.LGPL",
+          "sha256": "a853c2ffec17057872340eee242ae4d96cbf2b520ae27d903e1b2fef1a5f9d1c"
+        }
+      ]
+    }
+  },
+  "binary_sha256": "1503dcb3aad927ffa7b0ebcc7c8a21b75679abe5c338584802a53e40d366bb25",
+  "normalizer_sha256": "32169d229e17aa5f81a24d0ab092db2597916f8bd1f7fa34457e87a68559cb49",
+  "cargo_lock_sha256": "bdf01c1ac353c5862551111915e23b12393b69e3fbf007fd5a02ddbfd82c8d1f",
+  "runner_sha256": "7d77378d81c604ee76ff0c8c90f609eabc1028a4054a98aec64613dffaead607",
+  "python_version": "3.14.7",
+  "poppler_version": "pdftotext version 26.08.0\nCopyright 2005-2026 The Poppler Developers - http://poppler.freedesktop.org\nCopyright 1996-2011, 2022 Glyph & Cog, LLC",
+  "font_sha256": {
+    "LiberationMono-Bold.ttf": "1d8d631105d4cb6c562a0d90f591d6393007d71350c089aec81c37dc8da293ed",
+    "LiberationMono-BoldItalic.ttf": "bac30bbb26308b1a925d233a520fa764c80526f632b75defbf2b37e402eb6b1a",
+    "LiberationMono-Italic.ttf": "02312ecd02a6b7a96db60deb20468430abb7d3a91974ef9a90bd46ff78ea338d",
+    "LiberationMono-Regular.ttf": "47ed5b5fcfe6b3c9228937b05de9c769f5fa55b777d539af0f65172f0a24c90b",
+    "LiberationSans-Bold.ttf": "769673c4355020b1e28a14c366a152da410ab6b16239fe883ebc35b73624835b",
+    "LiberationSans-BoldItalic.ttf": "4b3d18cbd1b8c068115be4072f43418b194994313f47dbfd3588808903a55d34",
+    "LiberationSans-Italic.ttf": "8649cf5f2cbe4727549d78b714a3a7ee540718a13557769c4612fea105294c7e",
+    "LiberationSans-Regular.ttf": "baccc64becc3eb7d104b7c84d99f5314a0a1f896e2b3ea6c2f22fc08d2003bee",
+    "LiberationSerif-Bold.ttf": "28f2d4300ee366d1ff9ca95df967a27e77987c87857fad0d9c85034405aae39d",
+    "LiberationSerif-BoldItalic.ttf": "8de6363e9ca6c1e6f539ab032bd9ad6abfe138638f4fc53f3c26ea788b7724c5",
+    "LiberationSerif-Italic.ttf": "c7681827cba3bddb54f4673d0052cb944bdeac0b83c29c238240617e699311da",
+    "LiberationSerif-Regular.ttf": "86b9ea1c2f41bed9d7c09ccad4abc2894b33df5de60e5bbbece5d48610911870"
+  },
+  "git_revision": "e168be3665b676e13218a8fe29b1248a8b0e07b5",
+  "platform": "Linux-7.1.9-arch1-2-x86_64-with-glibc2.44",
+  "timeout_seconds": 60,
+  "preview_pages": 2,
+  "reference_fonts": "bundled Liberation only",
+  "libreoffice_version": "LibreOffice 26.2.5.2 620(Build:2)",
+  "fixtures": [
+    {
+      "id": "poi-word-simple-doc",
+      "source": "poi",
+      "path": "test-data/document/simple.doc",
+      "file": "poi/word/simple.doc",
+      "size": 19456,
+      "sha256": "4876e828e62d490fa188c7c4e47013e2e0dfdf02f5903dfd374bc0d2b2049ca1",
+      "purpose": "basic text",
+      "expect": "render",
+      "davros": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 16.99,
+        "sampled_peak_tree_rss_mib": 0.6,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              612.0,
+              792.0
+            ]
+          ],
+          "text_characters": 47,
+          "bytes": 10031
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-word-simple-doc/davros/page-1.png"
+        ]
+      },
+      "status": "converted",
+      "reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.441,
+        "peak_rss_mib": 17.0,
+        "sampled_peak_tree_rss_mib": 11.14,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              612.0,
+              792.0
+            ]
+          ],
+          "text_characters": 47,
+          "bytes": 16657
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-word-simple-doc/reference/page-1.png"
+        ]
+      },
+      "normalization": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 16.92,
+        "sampled_peak_tree_rss_mib": 0.58,
+        "stderr_tail": ""
+      },
+      "normalized_reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.435,
+        "peak_rss_mib": 17.0,
+        "sampled_peak_tree_rss_mib": 16.75,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              612.0,
+              792.0
+            ]
+          ],
+          "text_characters": 47,
+          "bytes": 16566
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-word-simple-doc/normalized_reference/page-1.png"
+        ]
+      },
+      "comparison": {
+        "reference_tokens": 10,
+        "actual_tokens": 10,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      },
+      "normalization_comparison": {
+        "reference_tokens": 10,
+        "actual_tokens": 10,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      },
+      "renderer_comparison": {
+        "reference_tokens": 10,
+        "actual_tokens": 10,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      }
+    },
+    {
+      "id": "poi-word-simple-table-doc",
+      "source": "poi",
+      "path": "test-data/document/simple-table.doc",
+      "file": "poi/word/simple-table.doc",
+      "size": 19456,
+      "sha256": "67d7fe8e0555c16516354498a5935f24eeef90beb5efbf526f93a1d6c734da43",
+      "purpose": "tables",
+      "expect": "render",
+      "davros": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 17.02,
+        "sampled_peak_tree_rss_mib": 0.57,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              612.0,
+              792.0
+            ]
+          ],
+          "text_characters": 236,
+          "bytes": 12261
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-word-simple-table-doc/davros/page-1.png"
+        ]
+      },
+      "status": "converted",
+      "reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.378,
+        "peak_rss_mib": 17.03,
+        "sampled_peak_tree_rss_mib": 16.96,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              612.0,
+              792.0
+            ]
+          ],
+          "text_characters": 236,
+          "bytes": 21308
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-word-simple-table-doc/reference/page-1.png"
+        ]
+      },
+      "normalization": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 17.03,
+        "sampled_peak_tree_rss_mib": 0.6,
+        "stderr_tail": ""
+      },
+      "normalized_reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.44,
+        "peak_rss_mib": 17.01,
+        "sampled_peak_tree_rss_mib": 23.44,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              612.0,
+              792.0
+            ]
+          ],
+          "text_characters": 236,
+          "bytes": 20781
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-word-simple-table-doc/normalized_reference/page-1.png"
+        ]
+      },
+      "comparison": {
+        "reference_tokens": 53,
+        "actual_tokens": 53,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      },
+      "normalization_comparison": {
+        "reference_tokens": 53,
+        "actual_tokens": 53,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      },
+      "renderer_comparison": {
+        "reference_tokens": 53,
+        "actual_tokens": 53,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      }
+    },
+    {
+      "id": "poi-word-table-merges-doc",
+      "source": "poi",
+      "path": "test-data/document/table-merges.doc",
+      "file": "poi/word/table-merges.doc",
+      "size": 11264,
+      "sha256": "bceea684bbf492fae57da88a133c3fd7ea9abd8355a89c6b9f31b9b0e2d68d3e",
+      "purpose": "merged table cells",
+      "expect": "render",
+      "davros": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 17.08,
+        "sampled_peak_tree_rss_mib": 0.87,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              612.0,
+              792.0
+            ]
+          ],
+          "text_characters": 21,
+          "bytes": 12027
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-word-table-merges-doc/davros/page-1.png"
+        ]
+      },
+      "status": "converted",
+      "reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.399,
+        "peak_rss_mib": 17.03,
+        "sampled_peak_tree_rss_mib": 19.1,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              595.304,
+              841.89
+            ]
+          ],
+          "text_characters": 21,
+          "bytes": 24374
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-word-table-merges-doc/reference/page-1.png"
+        ]
+      },
+      "normalization": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 17.04,
+        "sampled_peak_tree_rss_mib": 0.72,
+        "stderr_tail": ""
+      },
+      "normalized_reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.439,
+        "peak_rss_mib": 17.04,
+        "sampled_peak_tree_rss_mib": 21.01,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              612.0,
+              792.0
+            ]
+          ],
+          "text_characters": 21,
+          "bytes": 22734
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-word-table-merges-doc/normalized_reference/page-1.png"
+        ]
+      },
+      "comparison": {
+        "reference_tokens": 11,
+        "actual_tokens": 11,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      },
+      "normalization_comparison": {
+        "reference_tokens": 11,
+        "actual_tokens": 11,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      },
+      "renderer_comparison": {
+        "reference_tokens": 11,
+        "actual_tokens": 11,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      }
+    },
+    {
+      "id": "poi-word-Lists-doc",
+      "source": "poi",
+      "path": "test-data/document/Lists.doc",
+      "file": "poi/word/Lists.doc",
+      "size": 27648,
+      "sha256": "82b235ece31662a9b1b414f32a556d203261296e22689470a79007f0b29c37fa",
+      "purpose": "lists",
+      "expect": "render",
+      "davros": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.012,
+        "peak_rss_mib": 17.04,
+        "sampled_peak_tree_rss_mib": 16.57,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              612.0,
+              792.0
+            ]
+          ],
+          "text_characters": 614,
+          "bytes": 20481
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-word-Lists-doc/davros/page-1.png"
+        ]
+      },
+      "status": "converted",
+      "reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.382,
+        "peak_rss_mib": 17.04,
+        "sampled_peak_tree_rss_mib": 19.26,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 2,
+          "page_sizes_pt": [
+            [
+              612.0,
+              792.0
+            ],
+            [
+              612.0,
+              792.0
+            ]
+          ],
+          "text_characters": 620,
+          "bytes": 47101
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-word-Lists-doc/reference/page-1.png",
+          "poi-word-Lists-doc/reference/page-2.png"
+        ]
+      },
+      "normalization": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 17.04,
+        "sampled_peak_tree_rss_mib": 0.57,
+        "stderr_tail": ""
+      },
+      "normalized_reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.446,
+        "peak_rss_mib": 17.04,
+        "sampled_peak_tree_rss_mib": 24.79,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              612.0,
+              792.0
+            ]
+          ],
+          "text_characters": 614,
+          "bytes": 42977
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-word-Lists-doc/normalized_reference/page-1.png"
+        ]
+      },
+      "comparison": {
+        "reference_tokens": 159,
+        "actual_tokens": 164,
+        "token_recall": 0.9623,
+        "token_precision": 0.9329,
+        "missing_tokens_sample": [
+          [
+            "2",
+            6
+          ]
+        ]
+      },
+      "normalization_comparison": {
+        "reference_tokens": 159,
+        "actual_tokens": 164,
+        "token_recall": 0.9308,
+        "token_precision": 0.9024,
+        "missing_tokens_sample": [
+          [
+            "2",
+            9
+          ],
+          [
+            "3",
+            2
+          ]
+        ]
+      },
+      "renderer_comparison": {
+        "reference_tokens": 164,
+        "actual_tokens": 164,
+        "token_recall": 0.9268,
+        "token_precision": 0.9268,
+        "missing_tokens_sample": [
+          [
+            "0",
+            12
+          ]
+        ]
+      }
+    },
+    {
+      "id": "poi-word-DiffFirstPageHeadFoot-doc",
+      "source": "poi",
+      "path": "test-data/document/DiffFirstPageHeadFoot.doc",
+      "file": "poi/word/DiffFirstPageHeadFoot.doc",
+      "size": 27648,
+      "sha256": "674285298712213a7e0141182a2efc9d7f3ad6ebf4f5520b8405774ec3e5def0",
+      "purpose": "first-page headers and footers",
+      "expect": "render",
+      "davros": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.012,
+        "peak_rss_mib": 17.04,
+        "sampled_peak_tree_rss_mib": 0.61,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              612.0,
+              792.0
+            ]
+          ],
+          "text_characters": 340,
+          "bytes": 17692
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-word-DiffFirstPageHeadFoot-doc/davros/page-1.png"
+        ]
+      },
+      "status": "converted",
+      "reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.393,
+        "peak_rss_mib": 17.05,
+        "sampled_peak_tree_rss_mib": 13.09,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 2,
+          "page_sizes_pt": [
+            [
+              612.0,
+              792.0
+            ],
+            [
+              612.0,
+              792.0
+            ]
+          ],
+          "text_characters": 425,
+          "bytes": 24812
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-word-DiffFirstPageHeadFoot-doc/reference/page-1.png",
+          "poi-word-DiffFirstPageHeadFoot-doc/reference/page-2.png"
+        ]
+      },
+      "normalization": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 17.05,
+        "sampled_peak_tree_rss_mib": 0.58,
+        "stderr_tail": ""
+      },
+      "normalized_reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.44,
+        "peak_rss_mib": 17.05,
+        "sampled_peak_tree_rss_mib": 18.65,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              612.0,
+              792.0
+            ]
+          ],
+          "text_characters": 340,
+          "bytes": 23971
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-word-DiffFirstPageHeadFoot-doc/normalized_reference/page-1.png"
+        ]
+      },
+      "comparison": {
+        "reference_tokens": 84,
+        "actual_tokens": 71,
+        "token_recall": 0.8452,
+        "token_precision": 1.0,
+        "missing_tokens_sample": [
+          [
+            "header",
+            3
+          ],
+          [
+            "footer",
+            3
+          ],
+          [
+            "right",
+            2
+          ],
+          [
+            "first",
+            1
+          ],
+          [
+            "column",
+            1
+          ],
+          [
+            "mid",
+            1
+          ],
+          [
+            "left",
+            1
+          ],
+          [
+            "middle",
+            1
+          ]
+        ]
+      },
+      "normalization_comparison": {
+        "reference_tokens": 84,
+        "actual_tokens": 71,
+        "token_recall": 0.8452,
+        "token_precision": 1.0,
+        "missing_tokens_sample": [
+          [
+            "header",
+            3
+          ],
+          [
+            "footer",
+            3
+          ],
+          [
+            "right",
+            2
+          ],
+          [
+            "first",
+            1
+          ],
+          [
+            "column",
+            1
+          ],
+          [
+            "mid",
+            1
+          ],
+          [
+            "left",
+            1
+          ],
+          [
+            "middle",
+            1
+          ]
+        ]
+      },
+      "renderer_comparison": {
+        "reference_tokens": 71,
+        "actual_tokens": 71,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      }
+    },
+    {
+      "id": "poi-word-footnote-doc",
+      "source": "poi",
+      "path": "test-data/document/footnote.doc",
+      "file": "poi/word/footnote.doc",
+      "size": 9728,
+      "sha256": "81a18ac63010789ca08c28de107658a308c758a3cfc667a6edf11ffe888d3e13",
+      "purpose": "footnotes",
+      "expect": "render",
+      "davros": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.012,
+        "peak_rss_mib": 17.05,
+        "sampled_peak_tree_rss_mib": 0.61,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              612.0,
+              792.0
+            ]
+          ],
+          "text_characters": 9,
+          "bytes": 13789
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-word-footnote-doc/davros/page-1.png"
+        ]
+      },
+      "status": "converted",
+      "reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.378,
+        "peak_rss_mib": 17.05,
+        "sampled_peak_tree_rss_mib": 15.98,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              595.304,
+              841.89
+            ]
+          ],
+          "text_characters": 40,
+          "bytes": 17415
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-word-footnote-doc/reference/page-1.png"
+        ]
+      },
+      "normalization": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 17.05,
+        "sampled_peak_tree_rss_mib": 0.72,
+        "stderr_tail": ""
+      },
+      "normalized_reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.436,
+        "peak_rss_mib": 17.05,
+        "sampled_peak_tree_rss_mib": 12.9,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              612.0,
+              792.0
+            ]
+          ],
+          "text_characters": 9,
+          "bytes": 13577
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-word-footnote-doc/normalized_reference/page-1.png"
+        ]
+      },
+      "comparison": {
+        "reference_tokens": 6,
+        "actual_tokens": 2,
+        "token_recall": 0.1667,
+        "token_precision": 0.5,
+        "missing_tokens_sample": [
+          [
+            "text1i",
+            1
+          ],
+          [
+            "i",
+            1
+          ],
+          [
+            "testendnote",
+            1
+          ],
+          [
+            "1",
+            1
+          ],
+          [
+            "testfootnote",
+            1
+          ]
+        ]
+      },
+      "normalization_comparison": {
+        "reference_tokens": 6,
+        "actual_tokens": 2,
+        "token_recall": 0.1667,
+        "token_precision": 0.5,
+        "missing_tokens_sample": [
+          [
+            "text1i",
+            1
+          ],
+          [
+            "i",
+            1
+          ],
+          [
+            "testendnote",
+            1
+          ],
+          [
+            "1",
+            1
+          ],
+          [
+            "testfootnote",
+            1
+          ]
+        ]
+      },
+      "renderer_comparison": {
+        "reference_tokens": 2,
+        "actual_tokens": 2,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      }
+    },
+    {
+      "id": "poi-word-PngPicture-doc",
+      "source": "poi",
+      "path": "test-data/document/PngPicture.doc",
+      "file": "poi/word/PngPicture.doc",
+      "size": 14336,
+      "sha256": "259aa01f88c17bb4ad364d08ce62424959f51717b37d8a5578e3045f9eaede6b",
+      "purpose": "embedded PNG",
+      "expect": "render",
+      "davros": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 17.05,
+        "sampled_peak_tree_rss_mib": 0.58,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              612.0,
+              792.0
+            ]
+          ],
+          "text_characters": 43,
+          "bytes": 10977
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-word-PngPicture-doc/davros/page-1.png"
+        ]
+      },
+      "status": "converted",
+      "reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.383,
+        "peak_rss_mib": 17.05,
+        "sampled_peak_tree_rss_mib": 16.88,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              612.0,
+              792.0
+            ]
+          ],
+          "text_characters": 43,
+          "bytes": 25130
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-word-PngPicture-doc/reference/page-1.png"
+        ]
+      },
+      "normalization": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 17.05,
+        "sampled_peak_tree_rss_mib": 0.8,
+        "stderr_tail": ""
+      },
+      "normalized_reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.435,
+        "peak_rss_mib": 17.05,
+        "sampled_peak_tree_rss_mib": 18.23,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              612.0,
+              792.0
+            ]
+          ],
+          "text_characters": 43,
+          "bytes": 17770
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-word-PngPicture-doc/normalized_reference/page-1.png"
+        ]
+      },
+      "comparison": {
+        "reference_tokens": 9,
+        "actual_tokens": 9,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      },
+      "normalization_comparison": {
+        "reference_tokens": 9,
+        "actual_tokens": 9,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      },
+      "renderer_comparison": {
+        "reference_tokens": 9,
+        "actual_tokens": 9,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      }
+    },
+    {
+      "id": "poi-word-PasswordProtected-doc",
+      "source": "poi",
+      "path": "test-data/document/PasswordProtected.doc",
+      "file": "poi/word/PasswordProtected.doc",
+      "size": 19968,
+      "sha256": "863d2216a6f5bb4cec0ea4131a05ae0822dbce347e2940155ef638c6d64935fe",
+      "purpose": "encrypted input",
+      "expect": "reject",
+      "davros": {
+        "exit_code": 1,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 17.05,
+        "sampled_peak_tree_rss_mib": 0.61,
+        "stderr_tail": "Error: Doc(Encrypted)\n",
+        "valid_pdf": false,
+        "previews": []
+      },
+      "status": "expected_rejection"
+    },
+    {
+      "id": "poi-word-DiffFirstPageHeadFoot-docx",
+      "source": "poi",
+      "path": "test-data/document/DiffFirstPageHeadFoot.docx",
+      "file": "poi/word/DiffFirstPageHeadFoot.docx",
+      "size": 14204,
+      "sha256": "e94332c7b86b1bbce960f93fec90078486ab8abc3913a024a24be391a0b42151",
+      "purpose": "modern header/footer control",
+      "expect": "render",
+      "davros": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 17.06,
+        "sampled_peak_tree_rss_mib": 0.6,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 2,
+          "page_sizes_pt": [
+            [
+              612.0,
+              792.0
+            ],
+            [
+              612.0,
+              792.0
+            ]
+          ],
+          "text_characters": 425,
+          "bytes": 18057
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-word-DiffFirstPageHeadFoot-docx/davros/page-1.png",
+          "poi-word-DiffFirstPageHeadFoot-docx/davros/page-2.png"
+        ]
+      },
+      "status": "converted",
+      "reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.461,
+        "peak_rss_mib": 17.06,
+        "sampled_peak_tree_rss_mib": 14.96,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 2,
+          "page_sizes_pt": [
+            [
+              612.0,
+              792.0
+            ],
+            [
+              612.0,
+              792.0
+            ]
+          ],
+          "text_characters": 425,
+          "bytes": 24712
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-word-DiffFirstPageHeadFoot-docx/reference/page-1.png",
+          "poi-word-DiffFirstPageHeadFoot-docx/reference/page-2.png"
+        ]
+      },
+      "comparison": {
+        "reference_tokens": 84,
+        "actual_tokens": 84,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      }
+    },
+    {
+      "id": "poi-word-VariousPictures-docx",
+      "source": "poi",
+      "path": "test-data/document/VariousPictures.docx",
+      "file": "poi/word/VariousPictures.docx",
+      "size": 103677,
+      "sha256": "c1eecbca7de9f99e21c677e1d5b045eaa1d5a442eff4c82f0cbe9af93726a070",
+      "purpose": "modern pictures",
+      "expect": "render",
+      "davros": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.012,
+        "peak_rss_mib": 17.06,
+        "sampled_peak_tree_rss_mib": 14.91,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              595.3,
+              841.9
+            ]
+          ],
+          "text_characters": 58,
+          "bytes": 25034
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-word-VariousPictures-docx/davros/page-1.png"
+        ]
+      },
+      "status": "converted",
+      "reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.477,
+        "peak_rss_mib": 17.06,
+        "sampled_peak_tree_rss_mib": 12.71,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              595.304,
+              841.89
+            ]
+          ],
+          "text_characters": 58,
+          "bytes": 96617
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-word-VariousPictures-docx/reference/page-1.png"
+        ]
+      },
+      "comparison": {
+        "reference_tokens": 10,
+        "actual_tokens": 10,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      }
+    },
+    {
+      "id": "poi-excel-Simple-xls",
+      "source": "poi",
+      "path": "test-data/spreadsheet/Simple.xls",
+      "file": "poi/excel/Simple.xls",
+      "size": 13824,
+      "sha256": "2b5ec8298bacffdca61c50f6f7607da0a4e63cf76fa011c62f203e6a66bc072a",
+      "purpose": "basic cells",
+      "expect": "render",
+      "davros": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.017,
+        "peak_rss_mib": 27.49,
+        "sampled_peak_tree_rss_mib": 18.98,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              595.28,
+              841.89
+            ]
+          ],
+          "text_characters": 9,
+          "bytes": 9137
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-excel-Simple-xls/davros/page-1.png"
+        ]
+      },
+      "status": "converted",
+      "reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.329,
+        "peak_rss_mib": 17.07,
+        "sampled_peak_tree_rss_mib": 12.54,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              595.304,
+              841.89
+            ]
+          ],
+          "text_characters": 9,
+          "bytes": 13823
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-excel-Simple-xls/reference/page-1.png"
+        ]
+      },
+      "normalization": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 16.94,
+        "sampled_peak_tree_rss_mib": 0.61,
+        "stderr_tail": ""
+      },
+      "normalized_reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.403,
+        "peak_rss_mib": 17.07,
+        "sampled_peak_tree_rss_mib": 23.95,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              595.304,
+              841.89
+            ]
+          ],
+          "text_characters": 9,
+          "bytes": 14366
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-excel-Simple-xls/normalized_reference/page-1.png"
+        ]
+      },
+      "comparison": {
+        "reference_tokens": 1,
+        "actual_tokens": 1,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      },
+      "normalization_comparison": {
+        "reference_tokens": 1,
+        "actual_tokens": 1,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      },
+      "renderer_comparison": {
+        "reference_tokens": 1,
+        "actual_tokens": 1,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      }
+    },
+    {
+      "id": "poi-excel-SimpleWithFormula-xls",
+      "source": "poi",
+      "path": "test-data/spreadsheet/SimpleWithFormula.xls",
+      "file": "poi/excel/SimpleWithFormula.xls",
+      "size": 13824,
+      "sha256": "73a99975b9ad250669bd49ffe2223ed50df8324775acfbc612740d38827913c9",
+      "purpose": "cached formula values",
+      "expect": "render",
+      "davros": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.026,
+        "peak_rss_mib": 28.27,
+        "sampled_peak_tree_rss_mib": 24.7,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              595.28,
+              841.89
+            ]
+          ],
+          "text_characters": 38,
+          "bytes": 14827
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-excel-SimpleWithFormula-xls/davros/page-1.png"
+        ]
+      },
+      "status": "converted",
+      "reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.329,
+        "peak_rss_mib": 17.07,
+        "sampled_peak_tree_rss_mib": 12.48,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              595.304,
+              841.89
+            ]
+          ],
+          "text_characters": 38,
+          "bytes": 14483
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-excel-SimpleWithFormula-xls/reference/page-1.png"
+        ]
+      },
+      "normalization": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 17.07,
+        "sampled_peak_tree_rss_mib": 0.68,
+        "stderr_tail": ""
+      },
+      "normalized_reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.419,
+        "peak_rss_mib": 17.07,
+        "sampled_peak_tree_rss_mib": 15.36,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              595.304,
+              841.89
+            ]
+          ],
+          "text_characters": 38,
+          "bytes": 20966
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-excel-SimpleWithFormula-xls/normalized_reference/page-1.png"
+        ]
+      },
+      "comparison": {
+        "reference_tokens": 3,
+        "actual_tokens": 3,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      },
+      "normalization_comparison": {
+        "reference_tokens": 3,
+        "actual_tokens": 3,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      },
+      "renderer_comparison": {
+        "reference_tokens": 3,
+        "actual_tokens": 3,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      }
+    },
+    {
+      "id": "poi-excel-DateFormats-xls",
+      "source": "poi",
+      "path": "test-data/spreadsheet/DateFormats.xls",
+      "file": "poi/excel/DateFormats.xls",
+      "size": 13824,
+      "sha256": "f3ac7e6f0f23e638cfeb0d34543e18f3b07cd93edd1e7a71be907c73a767310c",
+      "purpose": "date formatting",
+      "expect": "render",
+      "davros": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.018,
+        "peak_rss_mib": 28.25,
+        "sampled_peak_tree_rss_mib": 28.09,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              595.28,
+              841.89
+            ]
+          ],
+          "text_characters": 94,
+          "bytes": 16128
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-excel-DateFormats-xls/davros/page-1.png"
+        ]
+      },
+      "status": "converted",
+      "reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.333,
+        "peak_rss_mib": 17.07,
+        "sampled_peak_tree_rss_mib": 15.02,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              595.304,
+              841.89
+            ]
+          ],
+          "text_characters": 80,
+          "bytes": 17584
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-excel-DateFormats-xls/reference/page-1.png"
+        ]
+      },
+      "normalization": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 17.07,
+        "sampled_peak_tree_rss_mib": 0.58,
+        "stderr_tail": ""
+      },
+      "normalized_reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.424,
+        "peak_rss_mib": 17.07,
+        "sampled_peak_tree_rss_mib": 13.5,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              595.304,
+              841.89
+            ]
+          ],
+          "text_characters": 94,
+          "bytes": 23824
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-excel-DateFormats-xls/normalized_reference/page-1.png"
+        ]
+      },
+      "comparison": {
+        "reference_tokens": 22,
+        "actual_tokens": 25,
+        "token_recall": 0.7273,
+        "token_precision": 0.64,
+        "missing_tokens_sample": [
+          [
+            "07",
+            3
+          ],
+          [
+            "8",
+            2
+          ],
+          [
+            "aug",
+            1
+          ]
+        ]
+      },
+      "normalization_comparison": {
+        "reference_tokens": 22,
+        "actual_tokens": 25,
+        "token_recall": 0.7273,
+        "token_precision": 0.64,
+        "missing_tokens_sample": [
+          [
+            "07",
+            3
+          ],
+          [
+            "8",
+            2
+          ],
+          [
+            "aug",
+            1
+          ]
+        ]
+      },
+      "renderer_comparison": {
+        "reference_tokens": 25,
+        "actual_tokens": 25,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      }
+    },
+    {
+      "id": "poi-excel-SimpleWithStyling-xls",
+      "source": "poi",
+      "path": "test-data/spreadsheet/SimpleWithStyling.xls",
+      "file": "poi/excel/SimpleWithStyling.xls",
+      "size": 13824,
+      "sha256": "029d30c42f2f328bbca166bfba986b9aa8def448b7e238177999cd76602fe87b",
+      "purpose": "cell styling",
+      "expect": "render",
+      "davros": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.017,
+        "peak_rss_mib": 28.17,
+        "sampled_peak_tree_rss_mib": 19.2,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              595.28,
+              841.89
+            ]
+          ],
+          "text_characters": 39,
+          "bytes": 14855
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-excel-SimpleWithStyling-xls/davros/page-1.png"
+        ]
+      },
+      "status": "converted",
+      "reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.329,
+        "peak_rss_mib": 17.08,
+        "sampled_peak_tree_rss_mib": 12.79,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              612.0,
+              792.0
+            ]
+          ],
+          "text_characters": 39,
+          "bytes": 27468
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-excel-SimpleWithStyling-xls/reference/page-1.png"
+        ]
+      },
+      "normalization": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 17.08,
+        "sampled_peak_tree_rss_mib": 0.66,
+        "stderr_tail": ""
+      },
+      "normalized_reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.408,
+        "peak_rss_mib": 17.08,
+        "sampled_peak_tree_rss_mib": 15.88,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              595.304,
+              841.89
+            ]
+          ],
+          "text_characters": 39,
+          "bytes": 21336
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-excel-SimpleWithStyling-xls/normalized_reference/page-1.png"
+        ]
+      },
+      "comparison": {
+        "reference_tokens": 4,
+        "actual_tokens": 4,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      },
+      "normalization_comparison": {
+        "reference_tokens": 4,
+        "actual_tokens": 4,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      },
+      "renderer_comparison": {
+        "reference_tokens": 4,
+        "actual_tokens": 4,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      }
+    },
+    {
+      "id": "poi-excel-SimpleWithImages-xls",
+      "source": "poi",
+      "path": "test-data/spreadsheet/SimpleWithImages.xls",
+      "file": "poi/excel/SimpleWithImages.xls",
+      "size": 48128,
+      "sha256": "dd35970bf68df7bb609b681634602ead30001816009c791012d00b5563ab9314",
+      "purpose": "embedded images",
+      "expect": "render",
+      "davros": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.017,
+        "peak_rss_mib": 24.81,
+        "sampled_peak_tree_rss_mib": 24.91,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              595.28,
+              841.89
+            ]
+          ],
+          "text_characters": 0,
+          "bytes": 16139
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-excel-SimpleWithImages-xls/davros/page-1.png"
+        ]
+      },
+      "status": "converted",
+      "reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.344,
+        "peak_rss_mib": 17.08,
+        "sampled_peak_tree_rss_mib": 16.53,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 2,
+          "page_sizes_pt": [
+            [
+              595.304,
+              841.89
+            ],
+            [
+              595.304,
+              841.89
+            ]
+          ],
+          "text_characters": 0,
+          "bytes": 53431
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-excel-SimpleWithImages-xls/reference/page-1.png",
+          "poi-excel-SimpleWithImages-xls/reference/page-2.png"
+        ]
+      },
+      "normalization": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 17.08,
+        "sampled_peak_tree_rss_mib": 0.75,
+        "stderr_tail": ""
+      },
+      "normalized_reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.417,
+        "peak_rss_mib": 17.08,
+        "sampled_peak_tree_rss_mib": 20.1,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              595.304,
+              841.89
+            ]
+          ],
+          "text_characters": 0,
+          "bytes": 14115
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-excel-SimpleWithImages-xls/normalized_reference/page-1.png"
+        ]
+      },
+      "comparison": {
+        "reference_tokens": 0,
+        "actual_tokens": 0,
+        "token_recall": null,
+        "token_precision": null,
+        "missing_tokens_sample": []
+      },
+      "normalization_comparison": {
+        "reference_tokens": 0,
+        "actual_tokens": 0,
+        "token_recall": null,
+        "token_precision": null,
+        "missing_tokens_sample": []
+      },
+      "renderer_comparison": {
+        "reference_tokens": 0,
+        "actual_tokens": 0,
+        "token_recall": null,
+        "token_precision": null,
+        "missing_tokens_sample": []
+      }
+    },
+    {
+      "id": "poi-excel-SimpleChart-xls",
+      "source": "poi",
+      "path": "test-data/spreadsheet/SimpleChart.xls",
+      "file": "poi/excel/SimpleChart.xls",
+      "size": 14336,
+      "sha256": "8fbef881f6d869515eca2c36dde5b74bc5ffc900ec586b01d0b547234e111569",
+      "purpose": "embedded chart",
+      "expect": "render",
+      "davros": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.018,
+        "peak_rss_mib": 28.89,
+        "sampled_peak_tree_rss_mib": 25.28,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              595.28,
+              841.89
+            ]
+          ],
+          "text_characters": 203,
+          "bytes": 15068
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-excel-SimpleChart-xls/davros/page-1.png"
+        ]
+      },
+      "status": "converted",
+      "reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.357,
+        "peak_rss_mib": 17.09,
+        "sampled_peak_tree_rss_mib": 20.45,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 2,
+          "page_sizes_pt": [
+            [
+              595.304,
+              841.89
+            ],
+            [
+              595.304,
+              841.89
+            ]
+          ],
+          "text_characters": 376,
+          "bytes": 34036
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-excel-SimpleChart-xls/reference/page-1.png",
+          "poi-excel-SimpleChart-xls/reference/page-2.png"
+        ]
+      },
+      "normalization": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 17.09,
+        "sampled_peak_tree_rss_mib": 0.72,
+        "stderr_tail": ""
+      },
+      "normalized_reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.503,
+        "peak_rss_mib": 17.09,
+        "sampled_peak_tree_rss_mib": 20.59,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              595.304,
+              841.89
+            ]
+          ],
+          "text_characters": 198,
+          "bytes": 27774
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-excel-SimpleChart-xls/normalized_reference/page-1.png"
+        ]
+      },
+      "comparison": {
+        "reference_tokens": 127,
+        "actual_tokens": 63,
+        "token_recall": 0.2913,
+        "token_precision": 0.5873,
+        "missing_tokens_sample": [
+          [
+            "1",
+            35
+          ],
+          [
+            "2000",
+            17
+          ],
+          [
+            "3",
+            3
+          ],
+          [
+            "2",
+            3
+          ],
+          [
+            "4",
+            3
+          ],
+          [
+            "5",
+            3
+          ],
+          [
+            "6",
+            3
+          ],
+          [
+            "8",
+            3
+          ],
+          [
+            "9",
+            3
+          ],
+          [
+            "7",
+            3
+          ],
+          [
+            "14",
+            2
+          ],
+          [
+            "15",
+            2
+          ],
+          [
+            "column",
+            2
+          ],
+          [
+            "b",
+            2
+          ],
+          [
+            "10",
+            1
+          ],
+          [
+            "11",
+            1
+          ],
+          [
+            "12",
+            1
+          ],
+          [
+            "13",
+            1
+          ],
+          [
+            "0",
+            1
+          ],
+          [
+            "000",
+            1
+          ]
+        ]
+      },
+      "normalization_comparison": {
+        "reference_tokens": 127,
+        "actual_tokens": 61,
+        "token_recall": 0.2913,
+        "token_precision": 0.6066,
+        "missing_tokens_sample": [
+          [
+            "1",
+            35
+          ],
+          [
+            "2000",
+            17
+          ],
+          [
+            "3",
+            3
+          ],
+          [
+            "2",
+            3
+          ],
+          [
+            "4",
+            3
+          ],
+          [
+            "5",
+            3
+          ],
+          [
+            "6",
+            3
+          ],
+          [
+            "8",
+            3
+          ],
+          [
+            "9",
+            3
+          ],
+          [
+            "7",
+            3
+          ],
+          [
+            "14",
+            2
+          ],
+          [
+            "15",
+            2
+          ],
+          [
+            "column",
+            2
+          ],
+          [
+            "b",
+            2
+          ],
+          [
+            "10",
+            1
+          ],
+          [
+            "11",
+            1
+          ],
+          [
+            "12",
+            1
+          ],
+          [
+            "13",
+            1
+          ],
+          [
+            "0",
+            1
+          ],
+          [
+            "000",
+            1
+          ]
+        ]
+      },
+      "renderer_comparison": {
+        "reference_tokens": 61,
+        "actual_tokens": 63,
+        "token_recall": 1.0,
+        "token_precision": 0.9683,
+        "missing_tokens_sample": []
+      }
+    },
+    {
+      "id": "poi-excel-SimpleWithPageBreaks-xls",
+      "source": "poi",
+      "path": "test-data/spreadsheet/SimpleWithPageBreaks.xls",
+      "file": "poi/excel/SimpleWithPageBreaks.xls",
+      "size": 18432,
+      "sha256": "b0634993f101dcce02e368f733a98b86dd05b3e6e29e4c1fe119f5cf3344865f",
+      "purpose": "page breaks",
+      "expect": "render",
+      "davros": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.018,
+        "peak_rss_mib": 26.82,
+        "sampled_peak_tree_rss_mib": 18.69,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              595.28,
+              841.89
+            ]
+          ],
+          "text_characters": 4,
+          "bytes": 7509
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-excel-SimpleWithPageBreaks-xls/davros/page-1.png"
+        ]
+      },
+      "status": "converted",
+      "reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.424,
+        "peak_rss_mib": 17.1,
+        "sampled_peak_tree_rss_mib": 22.96,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              612.0,
+              792.0
+            ]
+          ],
+          "text_characters": 4,
+          "bytes": 13006
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-excel-SimpleWithPageBreaks-xls/reference/page-1.png"
+        ]
+      },
+      "normalization": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 17.1,
+        "sampled_peak_tree_rss_mib": 0.6,
+        "stderr_tail": ""
+      },
+      "normalized_reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.402,
+        "peak_rss_mib": 17.1,
+        "sampled_peak_tree_rss_mib": 23.94,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              595.304,
+              841.89
+            ]
+          ],
+          "text_characters": 4,
+          "bytes": 13225
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-excel-SimpleWithPageBreaks-xls/normalized_reference/page-1.png"
+        ]
+      },
+      "comparison": {
+        "reference_tokens": 1,
+        "actual_tokens": 1,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      },
+      "normalization_comparison": {
+        "reference_tokens": 1,
+        "actual_tokens": 1,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      },
+      "renderer_comparison": {
+        "reference_tokens": 1,
+        "actual_tokens": 1,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      }
+    },
+    {
+      "id": "poi-excel-password-xls",
+      "source": "poi",
+      "path": "test-data/spreadsheet/password.xls",
+      "file": "poi/excel/password.xls",
+      "size": 22528,
+      "sha256": "3ad12a829132d9c157d213c623af9c534b1449c42e93ab39b17ca53c909ac412",
+      "purpose": "encrypted input",
+      "expect": "reject",
+      "davros": {
+        "exit_code": 1,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 17.11,
+        "sampled_peak_tree_rss_mib": 0.68,
+        "stderr_tail": "Error: Xls(Encrypted)\n",
+        "valid_pdf": false,
+        "previews": []
+      },
+      "status": "expected_rejection"
+    },
+    {
+      "id": "poi-excel-SimpleMultiCell-xlsx",
+      "source": "poi",
+      "path": "test-data/spreadsheet/SimpleMultiCell.xlsx",
+      "file": "poi/excel/SimpleMultiCell.xlsx",
+      "size": 8123,
+      "sha256": "119b6e70c5bbca6ca3e46f981e0719c154d87203adb4b5b61210d726deab9f7a",
+      "purpose": "modern cells",
+      "expect": "render",
+      "davros": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.017,
+        "peak_rss_mib": 26.21,
+        "sampled_peak_tree_rss_mib": 23.87,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              612.0,
+              792.0
+            ]
+          ],
+          "text_characters": 35,
+          "bytes": 8354
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-excel-SimpleMultiCell-xlsx/davros/page-1.png"
+        ]
+      },
+      "status": "converted",
+      "reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.403,
+        "peak_rss_mib": 17.11,
+        "sampled_peak_tree_rss_mib": 23.01,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              595.304,
+              841.89
+            ]
+          ],
+          "text_characters": 35,
+          "bytes": 17292
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-excel-SimpleMultiCell-xlsx/reference/page-1.png"
+        ]
+      },
+      "comparison": {
+        "reference_tokens": 15,
+        "actual_tokens": 15,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      }
+    },
+    {
+      "id": "poi-excel-WithChart-xlsx",
+      "source": "poi",
+      "path": "test-data/spreadsheet/WithChart.xlsx",
+      "file": "poi/excel/WithChart.xlsx",
+      "size": 10138,
+      "sha256": "51f27aabf7417f5aaa0542857b6bb56a92d4afbabdc5c63f084c06f92b67429d",
+      "purpose": "modern chart",
+      "expect": "render",
+      "davros": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.018,
+        "peak_rss_mib": 27.45,
+        "sampled_peak_tree_rss_mib": 24.58,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 2,
+          "page_sizes_pt": [
+            [
+              612.0,
+              792.0
+            ],
+            [
+              612.0,
+              792.0
+            ]
+          ],
+          "text_characters": 87,
+          "bytes": 11536
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-excel-WithChart-xlsx/davros/page-1.png",
+          "poi-excel-WithChart-xlsx/davros/page-2.png"
+        ]
+      },
+      "status": "converted",
+      "reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.434,
+        "peak_rss_mib": 17.11,
+        "sampled_peak_tree_rss_mib": 19.53,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 2,
+          "page_sizes_pt": [
+            [
+              595.304,
+              841.89
+            ],
+            [
+              595.304,
+              841.89
+            ]
+          ],
+          "text_characters": 87,
+          "bytes": 22377
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-excel-WithChart-xlsx/reference/page-1.png",
+          "poi-excel-WithChart-xlsx/reference/page-2.png"
+        ]
+      },
+      "comparison": {
+        "reference_tokens": 32,
+        "actual_tokens": 32,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      }
+    },
+    {
+      "id": "poi-powerpoint-basic_test_ppt_file-ppt",
+      "source": "poi",
+      "path": "test-data/slideshow/basic_test_ppt_file.ppt",
+      "file": "poi/powerpoint/basic_test_ppt_file.ppt",
+      "size": 15360,
+      "sha256": "e8fd4c38ad72ce3735acbca0b60dd5870fb60f819c169e3947d166f4f1bcc79d",
+      "purpose": "basic slides",
+      "expect": "render",
+      "davros": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.023,
+        "peak_rss_mib": 29.27,
+        "sampled_peak_tree_rss_mib": 29.61,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 2,
+          "page_sizes_pt": [
+            [
+              960.0,
+              540.0
+            ],
+            [
+              960.0,
+              540.0
+            ]
+          ],
+          "text_characters": 166,
+          "bytes": 12641
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-powerpoint-basic_test_ppt_file-ppt/davros/page-1.png",
+          "poi-powerpoint-basic_test_ppt_file-ppt/davros/page-2.png"
+        ]
+      },
+      "status": "converted",
+      "reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.329,
+        "peak_rss_mib": 17.12,
+        "sampled_peak_tree_rss_mib": 11.18,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 2,
+          "page_sizes_pt": [
+            [
+              720.0,
+              540.0
+            ],
+            [
+              720.0,
+              540.0
+            ]
+          ],
+          "text_characters": 172,
+          "bytes": 19611
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-powerpoint-basic_test_ppt_file-ppt/reference/page-1.png",
+          "poi-powerpoint-basic_test_ppt_file-ppt/reference/page-2.png"
+        ]
+      },
+      "normalization": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 17.12,
+        "sampled_peak_tree_rss_mib": 0.55,
+        "stderr_tail": ""
+      },
+      "normalized_reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.393,
+        "peak_rss_mib": 17.12,
+        "sampled_peak_tree_rss_mib": 17.25,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 2,
+          "page_sizes_pt": [
+            [
+              960.009,
+              540.0
+            ],
+            [
+              960.009,
+              540.0
+            ]
+          ],
+          "text_characters": 166,
+          "bytes": 18642
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-powerpoint-basic_test_ppt_file-ppt/normalized_reference/page-1.png",
+          "poi-powerpoint-basic_test_ppt_file-ppt/normalized_reference/page-2.png"
+        ]
+      },
+      "comparison": {
+        "reference_tokens": 37,
+        "actual_tokens": 37,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      },
+      "normalization_comparison": {
+        "reference_tokens": 37,
+        "actual_tokens": 37,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      },
+      "renderer_comparison": {
+        "reference_tokens": 37,
+        "actual_tokens": 37,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      }
+    },
+    {
+      "id": "poi-powerpoint-bullets-ppt",
+      "source": "poi",
+      "path": "test-data/slideshow/bullets.ppt",
+      "file": "poi/powerpoint/bullets.ppt",
+      "size": 18944,
+      "sha256": "38eab05ec9e0974e5e30aab218581de4af23fd9745631b0eb54fbdd990c446ab",
+      "purpose": "bullets",
+      "expect": "render",
+      "davros": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.023,
+        "peak_rss_mib": 29.63,
+        "sampled_peak_tree_rss_mib": 29.71,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 2,
+          "page_sizes_pt": [
+            [
+              960.0,
+              540.0
+            ],
+            [
+              960.0,
+              540.0
+            ]
+          ],
+          "text_characters": 263,
+          "bytes": 13682
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-powerpoint-bullets-ppt/davros/page-1.png",
+          "poi-powerpoint-bullets-ppt/davros/page-2.png"
+        ]
+      },
+      "status": "converted",
+      "reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.328,
+        "peak_rss_mib": 17.17,
+        "sampled_peak_tree_rss_mib": 16.04,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 2,
+          "page_sizes_pt": [
+            [
+              720.0,
+              540.0
+            ],
+            [
+              720.0,
+              540.0
+            ]
+          ],
+          "text_characters": 275,
+          "bytes": 22266
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-powerpoint-bullets-ppt/reference/page-1.png",
+          "poi-powerpoint-bullets-ppt/reference/page-2.png"
+        ]
+      },
+      "normalization": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 17.17,
+        "sampled_peak_tree_rss_mib": 0.62,
+        "stderr_tail": ""
+      },
+      "normalized_reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.392,
+        "peak_rss_mib": 17.17,
+        "sampled_peak_tree_rss_mib": 15.09,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 2,
+          "page_sizes_pt": [
+            [
+              960.009,
+              540.0
+            ],
+            [
+              960.009,
+              540.0
+            ]
+          ],
+          "text_characters": 263,
+          "bytes": 19992
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-powerpoint-bullets-ppt/normalized_reference/page-1.png",
+          "poi-powerpoint-bullets-ppt/normalized_reference/page-2.png"
+        ]
+      },
+      "comparison": {
+        "reference_tokens": 48,
+        "actual_tokens": 50,
+        "token_recall": 1.0,
+        "token_precision": 0.96,
+        "missing_tokens_sample": []
+      },
+      "normalization_comparison": {
+        "reference_tokens": 48,
+        "actual_tokens": 50,
+        "token_recall": 1.0,
+        "token_precision": 0.96,
+        "missing_tokens_sample": []
+      },
+      "renderer_comparison": {
+        "reference_tokens": 50,
+        "actual_tokens": 50,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      }
+    },
+    {
+      "id": "poi-powerpoint-table_test-ppt",
+      "source": "poi",
+      "path": "test-data/slideshow/table_test.ppt",
+      "file": "poi/powerpoint/table_test.ppt",
+      "size": 122368,
+      "sha256": "4e5c3e64cb0de2b98e7f5d8f8259b4689cc52a3793bd4e0f011493284ee39d77",
+      "purpose": "tables",
+      "expect": "render",
+      "davros": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.018,
+        "peak_rss_mib": 26.45,
+        "sampled_peak_tree_rss_mib": 17.86,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              960.0,
+              540.0
+            ]
+          ],
+          "text_characters": 7,
+          "bytes": 7949
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-powerpoint-table_test-ppt/davros/page-1.png"
+        ]
+      },
+      "status": "converted",
+      "reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.335,
+        "peak_rss_mib": 17.2,
+        "sampled_peak_tree_rss_mib": 20.02,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              960.094,
+              540.0
+            ]
+          ],
+          "text_characters": 0,
+          "bytes": 13341
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-powerpoint-table_test-ppt/reference/page-1.png"
+        ]
+      },
+      "normalization": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 17.2,
+        "sampled_peak_tree_rss_mib": 0.63,
+        "stderr_tail": ""
+      },
+      "normalized_reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.387,
+        "peak_rss_mib": 17.2,
+        "sampled_peak_tree_rss_mib": 21.67,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              960.009,
+              540.0
+            ]
+          ],
+          "text_characters": 7,
+          "bytes": 13362
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-powerpoint-table_test-ppt/normalized_reference/page-1.png"
+        ]
+      },
+      "comparison": {
+        "reference_tokens": 0,
+        "actual_tokens": 2,
+        "token_recall": null,
+        "token_precision": 0.0,
+        "missing_tokens_sample": []
+      },
+      "normalization_comparison": {
+        "reference_tokens": 0,
+        "actual_tokens": 2,
+        "token_recall": null,
+        "token_precision": 0.0,
+        "missing_tokens_sample": []
+      },
+      "renderer_comparison": {
+        "reference_tokens": 2,
+        "actual_tokens": 2,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      }
+    },
+    {
+      "id": "poi-powerpoint-pictures-ppt",
+      "source": "poi",
+      "path": "test-data/slideshow/pictures.ppt",
+      "file": "poi/powerpoint/pictures.ppt",
+      "size": 75776,
+      "sha256": "5318e8486f47c7d9e838eaa4edfe385ba27d7d0ce145364792df53488430e98c",
+      "purpose": "embedded pictures",
+      "expect": "render",
+      "davros": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.017,
+        "peak_rss_mib": 27.96,
+        "sampled_peak_tree_rss_mib": 24.87,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              960.0,
+              540.0
+            ]
+          ],
+          "text_characters": 7,
+          "bytes": 26324
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-powerpoint-pictures-ppt/davros/page-1.png"
+        ]
+      },
+      "status": "converted",
+      "reference": {
+        "exit_code": 1,
+        "timeout": false,
+        "seconds": 0.292,
+        "peak_rss_mib": 17.21,
+        "sampled_peak_tree_rss_mib": 21.15,
+        "stderr_tail": "Error: source file could not be loaded\n",
+        "valid_pdf": false,
+        "previews": []
+      },
+      "normalization": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 17.21,
+        "sampled_peak_tree_rss_mib": 0.7,
+        "stderr_tail": ""
+      },
+      "normalized_reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.398,
+        "peak_rss_mib": 17.21,
+        "sampled_peak_tree_rss_mib": 24.91,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              960.009,
+              540.0
+            ]
+          ],
+          "text_characters": 7,
+          "bytes": 59759
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-powerpoint-pictures-ppt/normalized_reference/page-1.png"
+        ]
+      },
+      "renderer_comparison": {
+        "reference_tokens": 2,
+        "actual_tokens": 2,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      }
+    },
+    {
+      "id": "poi-powerpoint-headers_footers-ppt",
+      "source": "poi",
+      "path": "test-data/slideshow/headers_footers.ppt",
+      "file": "poi/powerpoint/headers_footers.ppt",
+      "size": 12800,
+      "sha256": "9160be9bc9a4c65f54da5f91dee8e4fc21f53d0ee6fc7eb1e2c65ebc1ae0279a",
+      "purpose": "headers and footers",
+      "expect": "render",
+      "davros": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.018,
+        "peak_rss_mib": 27.88,
+        "sampled_peak_tree_rss_mib": 24.91,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 3,
+          "page_sizes_pt": [
+            [
+              960.0,
+              540.0
+            ],
+            [
+              960.0,
+              540.0
+            ],
+            [
+              960.0,
+              540.0
+            ]
+          ],
+          "text_characters": 94,
+          "bytes": 10841
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-powerpoint-headers_footers-ppt/davros/page-1.png",
+          "poi-powerpoint-headers_footers-ppt/davros/page-2.png"
+        ]
+      },
+      "status": "converted",
+      "reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.334,
+        "peak_rss_mib": 17.23,
+        "sampled_peak_tree_rss_mib": 24.97,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 2,
+          "page_sizes_pt": [
+            [
+              720.0,
+              540.0
+            ],
+            [
+              720.0,
+              540.0
+            ]
+          ],
+          "text_characters": 58,
+          "bytes": 16775
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-powerpoint-headers_footers-ppt/reference/page-1.png",
+          "poi-powerpoint-headers_footers-ppt/reference/page-2.png"
+        ]
+      },
+      "normalization": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 17.28,
+        "sampled_peak_tree_rss_mib": 0.87,
+        "stderr_tail": ""
+      },
+      "normalized_reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.392,
+        "peak_rss_mib": 17.23,
+        "sampled_peak_tree_rss_mib": 18.21,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 3,
+          "page_sizes_pt": [
+            [
+              960.009,
+              540.0
+            ],
+            [
+              960.009,
+              540.0
+            ],
+            [
+              960.009,
+              540.0
+            ]
+          ],
+          "text_characters": 94,
+          "bytes": 17638
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-powerpoint-headers_footers-ppt/normalized_reference/page-1.png",
+          "poi-powerpoint-headers_footers-ppt/normalized_reference/page-2.png"
+        ]
+      },
+      "comparison": {
+        "reference_tokens": 14,
+        "actual_tokens": 16,
+        "token_recall": 0.5,
+        "token_precision": 0.4375,
+        "missing_tokens_sample": [
+          [
+            "10",
+            2
+          ],
+          [
+            "13",
+            2
+          ],
+          [
+            "26",
+            2
+          ],
+          [
+            "per",
+            1
+          ]
+        ]
+      },
+      "normalization_comparison": {
+        "reference_tokens": 14,
+        "actual_tokens": 16,
+        "token_recall": 0.5,
+        "token_precision": 0.4375,
+        "missing_tokens_sample": [
+          [
+            "10",
+            2
+          ],
+          [
+            "13",
+            2
+          ],
+          [
+            "26",
+            2
+          ],
+          [
+            "per",
+            1
+          ]
+        ]
+      },
+      "renderer_comparison": {
+        "reference_tokens": 16,
+        "actual_tokens": 16,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      }
+    },
+    {
+      "id": "poi-powerpoint-text-margins-ppt",
+      "source": "poi",
+      "path": "test-data/slideshow/text-margins.ppt",
+      "file": "poi/powerpoint/text-margins.ppt",
+      "size": 44032,
+      "sha256": "a27008c6fda5e17653febc45ac65ed702003efb49607079f186307a9c0a6ea56",
+      "purpose": "text positioning",
+      "expect": "render",
+      "davros": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.017,
+        "peak_rss_mib": 27.15,
+        "sampled_peak_tree_rss_mib": 24.5,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              960.0,
+              540.0
+            ]
+          ],
+          "text_characters": 31,
+          "bytes": 8769
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-powerpoint-text-margins-ppt/davros/page-1.png"
+        ]
+      },
+      "status": "converted",
+      "reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.345,
+        "peak_rss_mib": 17.26,
+        "sampled_peak_tree_rss_mib": 11.41,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              720.0,
+              540.0
+            ]
+          ],
+          "text_characters": 23,
+          "bytes": 14204
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-powerpoint-text-margins-ppt/reference/page-1.png"
+        ]
+      },
+      "normalization": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 17.26,
+        "sampled_peak_tree_rss_mib": 0.71,
+        "stderr_tail": ""
+      },
+      "normalized_reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.409,
+        "peak_rss_mib": 17.26,
+        "sampled_peak_tree_rss_mib": 13.03,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              960.009,
+              540.0
+            ]
+          ],
+          "text_characters": 31,
+          "bytes": 14612
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-powerpoint-text-margins-ppt/normalized_reference/page-1.png"
+        ]
+      },
+      "comparison": {
+        "reference_tokens": 4,
+        "actual_tokens": 6,
+        "token_recall": 1.0,
+        "token_precision": 0.6667,
+        "missing_tokens_sample": []
+      },
+      "normalization_comparison": {
+        "reference_tokens": 4,
+        "actual_tokens": 6,
+        "token_recall": 1.0,
+        "token_precision": 0.6667,
+        "missing_tokens_sample": []
+      },
+      "renderer_comparison": {
+        "reference_tokens": 6,
+        "actual_tokens": 6,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      }
+    },
+    {
+      "id": "poi-powerpoint-Password_Protected-hello-ppt",
+      "source": "poi",
+      "path": "test-data/slideshow/Password_Protected-hello.ppt",
+      "file": "poi/powerpoint/Password_Protected-hello.ppt",
+      "size": 10752,
+      "sha256": "8d0dd9f53317a720687cf5234af0c021fab665194b09b9bb56a3f71b495bf45a",
+      "purpose": "encrypted input",
+      "expect": "reject",
+      "davros": {
+        "exit_code": 1,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 17.34,
+        "sampled_peak_tree_rss_mib": 0.62,
+        "stderr_tail": "Error: Ppt(Encrypted)\n",
+        "valid_pdf": false,
+        "previews": []
+      },
+      "status": "expected_rejection"
+    },
+    {
+      "id": "poi-powerpoint-table_test-pptx",
+      "source": "poi",
+      "path": "test-data/slideshow/table_test.pptx",
+      "file": "poi/powerpoint/table_test.pptx",
+      "size": 28935,
+      "sha256": "b9c3eb4b198ef3e53a4ff1a5ef4118a5ce6ba1760592c553abf665b37dcac5f8",
+      "purpose": "modern tables",
+      "expect": "render",
+      "davros": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.017,
+        "peak_rss_mib": 23.84,
+        "sampled_peak_tree_rss_mib": 22.01,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              960.0,
+              540.0
+            ]
+          ],
+          "text_characters": 0,
+          "bytes": 2944
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-powerpoint-table_test-pptx/davros/page-1.png"
+        ]
+      },
+      "status": "converted",
+      "reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.509,
+        "peak_rss_mib": 17.36,
+        "sampled_peak_tree_rss_mib": 12.85,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              960.009,
+              540.0
+            ]
+          ],
+          "text_characters": 0,
+          "bytes": 13161
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-powerpoint-table_test-pptx/reference/page-1.png"
+        ]
+      },
+      "comparison": {
+        "reference_tokens": 0,
+        "actual_tokens": 0,
+        "token_recall": null,
+        "token_precision": null,
+        "missing_tokens_sample": []
+      }
+    },
+    {
+      "id": "poi-powerpoint-bar-chart-pptx",
+      "source": "poi",
+      "path": "test-data/slideshow/bar-chart.pptx",
+      "file": "poi/powerpoint/bar-chart.pptx",
+      "size": 44410,
+      "sha256": "79e1d218bfb2903e8dc8425a6b1997d9c1976f5a5f025bada85b0c47b5777969",
+      "purpose": "modern chart",
+      "expect": "render",
+      "davros": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.023,
+        "peak_rss_mib": 27.45,
+        "sampled_peak_tree_rss_mib": 23.35,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              720.0,
+              540.0
+            ]
+          ],
+          "text_characters": 69,
+          "bytes": 17582
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-powerpoint-bar-chart-pptx/davros/page-1.png"
+        ]
+      },
+      "status": "converted",
+      "reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.502,
+        "peak_rss_mib": 17.38,
+        "sampled_peak_tree_rss_mib": 15.19,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              720.0,
+              540.0
+            ]
+          ],
+          "text_characters": 76,
+          "bytes": 25079
+        },
+        "valid_pdf": true,
+        "previews": [
+          "poi-powerpoint-bar-chart-pptx/reference/page-1.png"
+        ]
+      },
+      "comparison": {
+        "reference_tokens": 23,
+        "actual_tokens": 19,
+        "token_recall": 0.7826,
+        "token_precision": 0.9474,
+        "missing_tokens_sample": [
+          [
+            "1",
+            1
+          ],
+          [
+            "3",
+            1
+          ],
+          [
+            "5",
+            1
+          ],
+          [
+            "7",
+            1
+          ],
+          [
+            "9",
+            1
+          ]
+        ]
+      }
+    },
+    {
+      "id": "libreoffice-word-continuous-sections-doc",
+      "source": "libreoffice",
+      "path": "sw/qa/extras/ww8export/data/continuous-sections.doc",
+      "file": "libreoffice/word/continuous-sections.doc",
+      "size": 26624,
+      "sha256": "4a40cd7f2880a6d981caf1dad004ee060be07148a98f92db3484238d6166513f",
+      "purpose": "continuous sections",
+      "expect": "render",
+      "davros": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 17.39,
+        "sampled_peak_tree_rss_mib": 0.57,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              612.0,
+              792.0
+            ]
+          ],
+          "text_characters": 26,
+          "bytes": 7922
+        },
+        "valid_pdf": true,
+        "previews": [
+          "libreoffice-word-continuous-sections-doc/davros/page-1.png"
+        ]
+      },
+      "status": "converted",
+      "reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.372,
+        "peak_rss_mib": 17.39,
+        "sampled_peak_tree_rss_mib": 18.17,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              612.0,
+              792.0
+            ]
+          ],
+          "text_characters": 26,
+          "bytes": 14030
+        },
+        "valid_pdf": true,
+        "previews": [
+          "libreoffice-word-continuous-sections-doc/reference/page-1.png"
+        ]
+      },
+      "normalization": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 17.39,
+        "sampled_peak_tree_rss_mib": 0.56,
+        "stderr_tail": ""
+      },
+      "normalized_reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.435,
+        "peak_rss_mib": 17.39,
+        "sampled_peak_tree_rss_mib": 17.57,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              612.0,
+              792.0
+            ]
+          ],
+          "text_characters": 26,
+          "bytes": 14928
+        },
+        "valid_pdf": true,
+        "previews": [
+          "libreoffice-word-continuous-sections-doc/normalized_reference/page-1.png"
+        ]
+      },
+      "comparison": {
+        "reference_tokens": 6,
+        "actual_tokens": 6,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      },
+      "normalization_comparison": {
+        "reference_tokens": 6,
+        "actual_tokens": 6,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      },
+      "renderer_comparison": {
+        "reference_tokens": 6,
+        "actual_tokens": 6,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      }
+    },
+    {
+      "id": "libreoffice-word-commented-table-doc",
+      "source": "libreoffice",
+      "path": "sw/qa/extras/ww8export/data/commented-table.doc",
+      "file": "libreoffice/word/commented-table.doc",
+      "size": 27136,
+      "sha256": "33d235c3dcf3f6ac41e0a2a867c06b86503c2b815eebf7c9e1fa4dd26838f2ff",
+      "purpose": "table comments",
+      "expect": "render",
+      "davros": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 17.41,
+        "sampled_peak_tree_rss_mib": 0.62,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              612.0,
+              792.0
+            ]
+          ],
+          "text_characters": 20,
+          "bytes": 7585
+        },
+        "valid_pdf": true,
+        "previews": [
+          "libreoffice-word-commented-table-doc/davros/page-1.png"
+        ]
+      },
+      "status": "converted",
+      "reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.377,
+        "peak_rss_mib": 17.41,
+        "sampled_peak_tree_rss_mib": 11.9,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              612.0,
+              792.0
+            ]
+          ],
+          "text_characters": 20,
+          "bytes": 14400
+        },
+        "valid_pdf": true,
+        "previews": [
+          "libreoffice-word-commented-table-doc/reference/page-1.png"
+        ]
+      },
+      "normalization": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 17.41,
+        "sampled_peak_tree_rss_mib": 0.68,
+        "stderr_tail": ""
+      },
+      "normalized_reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.455,
+        "peak_rss_mib": 17.41,
+        "sampled_peak_tree_rss_mib": 23.01,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              612.0,
+              792.0
+            ]
+          ],
+          "text_characters": 20,
+          "bytes": 14229
+        },
+        "valid_pdf": true,
+        "previews": [
+          "libreoffice-word-commented-table-doc/normalized_reference/page-1.png"
+        ]
+      },
+      "comparison": {
+        "reference_tokens": 4,
+        "actual_tokens": 4,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      },
+      "normalization_comparison": {
+        "reference_tokens": 4,
+        "actual_tokens": 4,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      },
+      "renderer_comparison": {
+        "reference_tokens": 4,
+        "actual_tokens": 4,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      }
+    },
+    {
+      "id": "libreoffice-word-tdf104239_numbering-doc",
+      "source": "libreoffice",
+      "path": "sw/qa/extras/ww8export/data/tdf104239_numbering.doc",
+      "file": "libreoffice/word/tdf104239_numbering.doc",
+      "size": 52224,
+      "sha256": "62713fa50eeb1d50caa33de1cc3e618cc7aa7687a2f4d41275296c05925d676f",
+      "purpose": "numbering regression",
+      "expect": "render",
+      "davros": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.012,
+        "peak_rss_mib": 17.42,
+        "sampled_peak_tree_rss_mib": 15.47,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 2,
+          "page_sizes_pt": [
+            [
+              612.0,
+              792.0
+            ],
+            [
+              612.0,
+              792.0
+            ]
+          ],
+          "text_characters": 4214,
+          "bytes": 45805
+        },
+        "valid_pdf": true,
+        "previews": [
+          "libreoffice-word-tdf104239_numbering-doc/davros/page-1.png",
+          "libreoffice-word-tdf104239_numbering-doc/davros/page-2.png"
+        ]
+      },
+      "status": "converted",
+      "reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.422,
+        "peak_rss_mib": 17.42,
+        "sampled_peak_tree_rss_mib": 23.02,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 3,
+          "page_sizes_pt": [
+            [
+              595.304,
+              841.89
+            ],
+            [
+              595.304,
+              841.89
+            ],
+            [
+              595.304,
+              841.89
+            ]
+          ],
+          "text_characters": 4309,
+          "bytes": 75790
+        },
+        "valid_pdf": true,
+        "previews": [
+          "libreoffice-word-tdf104239_numbering-doc/reference/page-1.png",
+          "libreoffice-word-tdf104239_numbering-doc/reference/page-2.png"
+        ]
+      },
+      "normalization": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 17.42,
+        "sampled_peak_tree_rss_mib": 0.58,
+        "stderr_tail": ""
+      },
+      "normalized_reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.456,
+        "peak_rss_mib": 17.42,
+        "sampled_peak_tree_rss_mib": 13.98,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 2,
+          "page_sizes_pt": [
+            [
+              612.0,
+              792.0
+            ],
+            [
+              612.0,
+              792.0
+            ]
+          ],
+          "text_characters": 4213,
+          "bytes": 59151
+        },
+        "valid_pdf": true,
+        "previews": [
+          "libreoffice-word-tdf104239_numbering-doc/normalized_reference/page-1.png",
+          "libreoffice-word-tdf104239_numbering-doc/normalized_reference/page-2.png"
+        ]
+      },
+      "comparison": {
+        "reference_tokens": 554,
+        "actual_tokens": 513,
+        "token_recall": 0.9242,
+        "token_precision": 0.9981,
+        "missing_tokens_sample": [
+          [
+            "3",
+            20
+          ],
+          [
+            "2",
+            10
+          ],
+          [
+            "1",
+            6
+          ],
+          [
+            "4",
+            4
+          ],
+          [
+            "35",
+            1
+          ],
+          [
+            "36",
+            1
+          ]
+        ]
+      },
+      "normalization_comparison": {
+        "reference_tokens": 554,
+        "actual_tokens": 513,
+        "token_recall": 0.9206,
+        "token_precision": 0.9942,
+        "missing_tokens_sample": [
+          [
+            "3",
+            21
+          ],
+          [
+            "2",
+            10
+          ],
+          [
+            "1",
+            6
+          ],
+          [
+            "4",
+            5
+          ],
+          [
+            "35",
+            1
+          ],
+          [
+            "36",
+            1
+          ]
+        ]
+      },
+      "renderer_comparison": {
+        "reference_tokens": 513,
+        "actual_tokens": 513,
+        "token_recall": 0.9961,
+        "token_precision": 0.9961,
+        "missing_tokens_sample": [
+          [
+            "0",
+            2
+          ]
+        ]
+      }
+    },
+    {
+      "id": "libreoffice-word-tdf56321_flipImage_both-doc",
+      "source": "libreoffice",
+      "path": "sw/qa/extras/ww8export/data/tdf56321_flipImage_both.doc",
+      "file": "libreoffice/word/tdf56321_flipImage_both.doc",
+      "size": 22528,
+      "sha256": "6ddad0e144e9ee423f1378b05df4295b8b194099e2718e736766fd746c24e66c",
+      "purpose": "flipped image",
+      "expect": "render",
+      "davros": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 17.5,
+        "sampled_peak_tree_rss_mib": 0.61,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              612.0,
+              792.0
+            ]
+          ],
+          "text_characters": 0,
+          "bytes": 5004
+        },
+        "valid_pdf": true,
+        "previews": [
+          "libreoffice-word-tdf56321_flipImage_both-doc/davros/page-1.png"
+        ]
+      },
+      "status": "converted",
+      "reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.488,
+        "peak_rss_mib": 17.5,
+        "sampled_peak_tree_rss_mib": 16.01,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              595.304,
+              841.89
+            ]
+          ],
+          "text_characters": 0,
+          "bytes": 39206
+        },
+        "valid_pdf": true,
+        "previews": [
+          "libreoffice-word-tdf56321_flipImage_both-doc/reference/page-1.png"
+        ]
+      },
+      "normalization": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 17.5,
+        "sampled_peak_tree_rss_mib": 0.58,
+        "stderr_tail": ""
+      },
+      "normalized_reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.441,
+        "peak_rss_mib": 17.5,
+        "sampled_peak_tree_rss_mib": 23.02,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              612.0,
+              792.0
+            ]
+          ],
+          "text_characters": 0,
+          "bytes": 6459
+        },
+        "valid_pdf": true,
+        "previews": [
+          "libreoffice-word-tdf56321_flipImage_both-doc/normalized_reference/page-1.png"
+        ]
+      },
+      "comparison": {
+        "reference_tokens": 0,
+        "actual_tokens": 0,
+        "token_recall": null,
+        "token_precision": null,
+        "missing_tokens_sample": []
+      },
+      "normalization_comparison": {
+        "reference_tokens": 0,
+        "actual_tokens": 0,
+        "token_recall": null,
+        "token_precision": null,
+        "missing_tokens_sample": []
+      },
+      "renderer_comparison": {
+        "reference_tokens": 0,
+        "actual_tokens": 0,
+        "token_recall": null,
+        "token_precision": null,
+        "missing_tokens_sample": []
+      }
+    },
+    {
+      "id": "libreoffice-excel-cell-multi-line-xls",
+      "source": "libreoffice",
+      "path": "sc/qa/unit/data/xls/cell-multi-line.xls",
+      "file": "libreoffice/excel/cell-multi-line.xls",
+      "size": 33792,
+      "sha256": "1edfbb525b7f63e9b5342337a2f4595b943eee2d2d3c7ffa1766e307b893a74c",
+      "purpose": "multiline cells",
+      "expect": "render",
+      "davros": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.017,
+        "peak_rss_mib": 28.29,
+        "sampled_peak_tree_rss_mib": 28.46,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              595.28,
+              841.89
+            ]
+          ],
+          "text_characters": 35,
+          "bytes": 14124
+        },
+        "valid_pdf": true,
+        "previews": [
+          "libreoffice-excel-cell-multi-line-xls/davros/page-1.png"
+        ]
+      },
+      "status": "converted",
+      "reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.333,
+        "peak_rss_mib": 17.52,
+        "sampled_peak_tree_rss_mib": 18.88,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              595.304,
+              841.89
+            ]
+          ],
+          "text_characters": 33,
+          "bytes": 14039
+        },
+        "valid_pdf": true,
+        "previews": [
+          "libreoffice-excel-cell-multi-line-xls/reference/page-1.png"
+        ]
+      },
+      "normalization": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 17.61,
+        "sampled_peak_tree_rss_mib": 0.82,
+        "stderr_tail": ""
+      },
+      "normalized_reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.399,
+        "peak_rss_mib": 17.52,
+        "sampled_peak_tree_rss_mib": 23.04,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              595.304,
+              841.89
+            ]
+          ],
+          "text_characters": 33,
+          "bytes": 20314
+        },
+        "valid_pdf": true,
+        "previews": [
+          "libreoffice-excel-cell-multi-line-xls/normalized_reference/page-1.png"
+        ]
+      },
+      "comparison": {
+        "reference_tokens": 4,
+        "actual_tokens": 6,
+        "token_recall": 0.75,
+        "token_precision": 0.5,
+        "missing_tokens_sample": [
+          [
+            "line1line2line3",
+            1
+          ]
+        ]
+      },
+      "normalization_comparison": {
+        "reference_tokens": 4,
+        "actual_tokens": 4,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      },
+      "renderer_comparison": {
+        "reference_tokens": 4,
+        "actual_tokens": 6,
+        "token_recall": 0.75,
+        "token_precision": 0.5,
+        "missing_tokens_sample": [
+          [
+            "line1line2line3",
+            1
+          ]
+        ]
+      }
+    },
+    {
+      "id": "libreoffice-excel-cell-borders-xls",
+      "source": "libreoffice",
+      "path": "sc/qa/unit/data/xls/cell-borders.xls",
+      "file": "libreoffice/excel/cell-borders.xls",
+      "size": 25088,
+      "sha256": "4722bfa239b04667d88a30a99ccb4eb09223dfa52373ccd3cfadcb4c26c34ceb",
+      "purpose": "cell borders",
+      "expect": "render",
+      "davros": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.038,
+        "peak_rss_mib": 38.64,
+        "sampled_peak_tree_rss_mib": 39.29,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 4,
+          "page_sizes_pt": [
+            [
+              595.28,
+              841.89
+            ],
+            [
+              595.28,
+              841.89
+            ],
+            [
+              595.28,
+              841.89
+            ],
+            [
+              738.0,
+              841.89
+            ]
+          ],
+          "text_characters": 447,
+          "bytes": 28285
+        },
+        "valid_pdf": true,
+        "previews": [
+          "libreoffice-excel-cell-borders-xls/davros/page-1.png",
+          "libreoffice-excel-cell-borders-xls/davros/page-2.png"
+        ]
+      },
+      "status": "converted",
+      "reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.402,
+        "peak_rss_mib": 17.53,
+        "sampled_peak_tree_rss_mib": 21.91,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 5,
+          "page_sizes_pt": [
+            [
+              595.304,
+              841.89
+            ],
+            [
+              595.304,
+              841.89
+            ],
+            [
+              595.304,
+              841.89
+            ],
+            [
+              595.304,
+              841.89
+            ],
+            [
+              595.304,
+              841.89
+            ]
+          ],
+          "text_characters": 447,
+          "bytes": 42662
+        },
+        "valid_pdf": true,
+        "previews": [
+          "libreoffice-excel-cell-borders-xls/reference/page-1.png",
+          "libreoffice-excel-cell-borders-xls/reference/page-2.png"
+        ]
+      },
+      "normalization": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 17.54,
+        "sampled_peak_tree_rss_mib": 0.62,
+        "stderr_tail": ""
+      },
+      "normalized_reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.487,
+        "peak_rss_mib": 17.54,
+        "sampled_peak_tree_rss_mib": 17.34,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 5,
+          "page_sizes_pt": [
+            [
+              595.304,
+              841.89
+            ],
+            [
+              595.304,
+              841.89
+            ],
+            [
+              595.304,
+              841.89
+            ],
+            [
+              595.304,
+              841.89
+            ],
+            [
+              595.304,
+              841.89
+            ]
+          ],
+          "text_characters": 425,
+          "bytes": 65007
+        },
+        "valid_pdf": true,
+        "previews": [
+          "libreoffice-excel-cell-borders-xls/normalized_reference/page-1.png",
+          "libreoffice-excel-cell-borders-xls/normalized_reference/page-2.png"
+        ]
+      },
+      "comparison": {
+        "reference_tokens": 80,
+        "actual_tokens": 80,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      },
+      "normalization_comparison": {
+        "reference_tokens": 80,
+        "actual_tokens": 79,
+        "token_recall": 0.9375,
+        "token_precision": 0.9494,
+        "missing_tokens_sample": [
+          [
+            "dashdotdot",
+            1
+          ],
+          [
+            "mediumdashdotdot",
+            1
+          ],
+          [
+            "slantdashdot",
+            1
+          ],
+          [
+            "mediumdashdot",
+            1
+          ],
+          [
+            "mediumdashed",
+            1
+          ]
+        ]
+      },
+      "renderer_comparison": {
+        "reference_tokens": 79,
+        "actual_tokens": 80,
+        "token_recall": 0.9494,
+        "token_precision": 0.9375,
+        "missing_tokens_sample": [
+          [
+            "mediumda",
+            2
+          ],
+          [
+            "dashdotdo",
+            1
+          ],
+          [
+            "slantdashmediumda",
+            1
+          ]
+        ]
+      }
+    },
+    {
+      "id": "libreoffice-excel-embedded-chart-xls",
+      "source": "libreoffice",
+      "path": "sc/qa/unit/data/xls/embedded-chart.xls",
+      "file": "libreoffice/excel/embedded-chart.xls",
+      "size": 13824,
+      "sha256": "18f8f4292446f1be6f6aefeef4a805f63ee3bfd21e68b1e65cec8f99f85a16f3",
+      "purpose": "embedded chart",
+      "expect": "render",
+      "davros": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.017,
+        "peak_rss_mib": 29.2,
+        "sampled_peak_tree_rss_mib": 26.53,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 3,
+          "page_sizes_pt": [
+            [
+              595.28,
+              841.89
+            ],
+            [
+              595.28,
+              841.89
+            ],
+            [
+              595.28,
+              841.89
+            ]
+          ],
+          "text_characters": 88,
+          "bytes": 18080
+        },
+        "valid_pdf": true,
+        "previews": [
+          "libreoffice-excel-embedded-chart-xls/davros/page-1.png",
+          "libreoffice-excel-embedded-chart-xls/davros/page-2.png"
+        ]
+      },
+      "status": "converted",
+      "reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.351,
+        "peak_rss_mib": 17.56,
+        "sampled_peak_tree_rss_mib": 18.72,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 2,
+          "page_sizes_pt": [
+            [
+              595.304,
+              841.89
+            ],
+            [
+              595.304,
+              841.89
+            ]
+          ],
+          "text_characters": 110,
+          "bytes": 21952
+        },
+        "valid_pdf": true,
+        "previews": [
+          "libreoffice-excel-embedded-chart-xls/reference/page-1.png",
+          "libreoffice-excel-embedded-chart-xls/reference/page-2.png"
+        ]
+      },
+      "normalization": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 17.56,
+        "sampled_peak_tree_rss_mib": 0.69,
+        "stderr_tail": ""
+      },
+      "normalized_reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.41,
+        "peak_rss_mib": 17.56,
+        "sampled_peak_tree_rss_mib": 16.39,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 3,
+          "page_sizes_pt": [
+            [
+              595.304,
+              841.89
+            ],
+            [
+              595.304,
+              841.89
+            ],
+            [
+              595.304,
+              841.89
+            ]
+          ],
+          "text_characters": 88,
+          "bytes": 26711
+        },
+        "valid_pdf": true,
+        "previews": [
+          "libreoffice-excel-embedded-chart-xls/normalized_reference/page-1.png",
+          "libreoffice-excel-embedded-chart-xls/normalized_reference/page-2.png"
+        ]
+      },
+      "comparison": {
+        "reference_tokens": 36,
+        "actual_tokens": 21,
+        "token_recall": 0.5278,
+        "token_precision": 0.9048,
+        "missing_tokens_sample": [
+          [
+            "5",
+            5
+          ],
+          [
+            "2",
+            2
+          ],
+          [
+            "3",
+            2
+          ],
+          [
+            "4",
+            2
+          ],
+          [
+            "0",
+            2
+          ],
+          [
+            "a",
+            1
+          ],
+          [
+            "b",
+            1
+          ],
+          [
+            "c",
+            1
+          ],
+          [
+            "1",
+            1
+          ]
+        ]
+      },
+      "normalization_comparison": {
+        "reference_tokens": 36,
+        "actual_tokens": 21,
+        "token_recall": 0.5278,
+        "token_precision": 0.9048,
+        "missing_tokens_sample": [
+          [
+            "5",
+            5
+          ],
+          [
+            "2",
+            2
+          ],
+          [
+            "3",
+            2
+          ],
+          [
+            "4",
+            2
+          ],
+          [
+            "0",
+            2
+          ],
+          [
+            "a",
+            1
+          ],
+          [
+            "b",
+            1
+          ],
+          [
+            "c",
+            1
+          ],
+          [
+            "1",
+            1
+          ]
+        ]
+      },
+      "renderer_comparison": {
+        "reference_tokens": 21,
+        "actual_tokens": 21,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      }
+    },
+    {
+      "id": "libreoffice-excel-file-with-png-image-xls",
+      "source": "libreoffice",
+      "path": "sc/qa/unit/data/xls/file-with-png-image.xls",
+      "file": "libreoffice/excel/file-with-png-image.xls",
+      "size": 49152,
+      "sha256": "d427f083b912e73e453e0a110d1b807e8adb26c93f40d2a7ba9019abe299275e",
+      "purpose": "PNG image",
+      "expect": "render",
+      "davros": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.018,
+        "peak_rss_mib": 24.62,
+        "sampled_peak_tree_rss_mib": 24.53,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              595.28,
+              841.89
+            ]
+          ],
+          "text_characters": 0,
+          "bytes": 69450
+        },
+        "valid_pdf": true,
+        "previews": [
+          "libreoffice-excel-file-with-png-image-xls/davros/page-1.png"
+        ]
+      },
+      "status": "converted",
+      "reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.335,
+        "peak_rss_mib": 17.59,
+        "sampled_peak_tree_rss_mib": 20.91,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              595.304,
+              841.89
+            ]
+          ],
+          "text_characters": 0,
+          "bytes": 28558
+        },
+        "valid_pdf": true,
+        "previews": [
+          "libreoffice-excel-file-with-png-image-xls/reference/page-1.png"
+        ]
+      },
+      "normalization": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 17.59,
+        "sampled_peak_tree_rss_mib": 0.55,
+        "stderr_tail": ""
+      },
+      "normalized_reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.408,
+        "peak_rss_mib": 17.59,
+        "sampled_peak_tree_rss_mib": 15.93,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              595.304,
+              841.89
+            ]
+          ],
+          "text_characters": 0,
+          "bytes": 28744
+        },
+        "valid_pdf": true,
+        "previews": [
+          "libreoffice-excel-file-with-png-image-xls/normalized_reference/page-1.png"
+        ]
+      },
+      "comparison": {
+        "reference_tokens": 0,
+        "actual_tokens": 0,
+        "token_recall": null,
+        "token_precision": null,
+        "missing_tokens_sample": []
+      },
+      "normalization_comparison": {
+        "reference_tokens": 0,
+        "actual_tokens": 0,
+        "token_recall": null,
+        "token_precision": null,
+        "missing_tokens_sample": []
+      },
+      "renderer_comparison": {
+        "reference_tokens": 0,
+        "actual_tokens": 0,
+        "token_recall": null,
+        "token_precision": null,
+        "missing_tokens_sample": []
+      }
+    },
+    {
+      "id": "libreoffice-powerpoint-FillPatterns-ppt",
+      "source": "libreoffice",
+      "path": "sd/qa/unit/data/ppt/FillPatterns.ppt",
+      "file": "libreoffice/powerpoint/FillPatterns.ppt",
+      "size": 19968,
+      "sha256": "913f83c38c7e665105aac2df8f229be42986ccb1c5e6d8f55e9c6562b946817f",
+      "purpose": "pattern fills",
+      "expect": "render",
+      "davros": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.017,
+        "peak_rss_mib": 26.56,
+        "sampled_peak_tree_rss_mib": 23.21,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              960.0,
+              540.0
+            ]
+          ],
+          "text_characters": 7,
+          "bytes": 7909
+        },
+        "valid_pdf": true,
+        "previews": [
+          "libreoffice-powerpoint-FillPatterns-ppt/davros/page-1.png"
+        ]
+      },
+      "status": "converted",
+      "reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.43,
+        "peak_rss_mib": 17.61,
+        "sampled_peak_tree_rss_mib": 18.9,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              720.0,
+              540.0
+            ]
+          ],
+          "text_characters": 0,
+          "bytes": 37228
+        },
+        "valid_pdf": true,
+        "previews": [
+          "libreoffice-powerpoint-FillPatterns-ppt/reference/page-1.png"
+        ]
+      },
+      "normalization": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 17.61,
+        "sampled_peak_tree_rss_mib": 0.62,
+        "stderr_tail": ""
+      },
+      "normalized_reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.413,
+        "peak_rss_mib": 17.61,
+        "sampled_peak_tree_rss_mib": 16.49,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              960.009,
+              540.0
+            ]
+          ],
+          "text_characters": 7,
+          "bytes": 13262
+        },
+        "valid_pdf": true,
+        "previews": [
+          "libreoffice-powerpoint-FillPatterns-ppt/normalized_reference/page-1.png"
+        ]
+      },
+      "comparison": {
+        "reference_tokens": 0,
+        "actual_tokens": 2,
+        "token_recall": null,
+        "token_precision": 0.0,
+        "missing_tokens_sample": []
+      },
+      "normalization_comparison": {
+        "reference_tokens": 0,
+        "actual_tokens": 2,
+        "token_recall": null,
+        "token_precision": 0.0,
+        "missing_tokens_sample": []
+      },
+      "renderer_comparison": {
+        "reference_tokens": 2,
+        "actual_tokens": 2,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      }
+    },
+    {
+      "id": "libreoffice-powerpoint-crop-ppt",
+      "source": "libreoffice",
+      "path": "sd/qa/unit/data/ppt/crop.ppt",
+      "file": "libreoffice/powerpoint/crop.ppt",
+      "size": 147456,
+      "sha256": "8c3cafad29a2bf79dce6ade642e8cbae7ae441cbb0b47281b7d85d1d7ed646e0",
+      "purpose": "image cropping",
+      "expect": "render",
+      "davros": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.018,
+        "peak_rss_mib": 26.6,
+        "sampled_peak_tree_rss_mib": 17.34,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              960.0,
+              540.0
+            ]
+          ],
+          "text_characters": 7,
+          "bytes": 8017
+        },
+        "valid_pdf": true,
+        "previews": [
+          "libreoffice-powerpoint-crop-ppt/davros/page-1.png"
+        ]
+      },
+      "status": "converted",
+      "reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.339,
+        "peak_rss_mib": 17.61,
+        "sampled_peak_tree_rss_mib": 15.74,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              720.0,
+              540.0
+            ]
+          ],
+          "text_characters": 455,
+          "bytes": 42364
+        },
+        "valid_pdf": true,
+        "previews": [
+          "libreoffice-powerpoint-crop-ppt/reference/page-1.png"
+        ]
+      },
+      "normalization": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 17.61,
+        "sampled_peak_tree_rss_mib": 0.61,
+        "stderr_tail": ""
+      },
+      "normalized_reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.392,
+        "peak_rss_mib": 17.61,
+        "sampled_peak_tree_rss_mib": 11.07,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              960.009,
+              540.0
+            ]
+          ],
+          "text_characters": 544,
+          "bytes": 42042
+        },
+        "valid_pdf": true,
+        "previews": [
+          "libreoffice-powerpoint-crop-ppt/normalized_reference/page-1.png"
+        ]
+      },
+      "comparison": {
+        "reference_tokens": 95,
+        "actual_tokens": 2,
+        "token_recall": 0.0105,
+        "token_precision": 0.5,
+        "missing_tokens_sample": [
+          [
+            "10",
+            8
+          ],
+          [
+            "mk",
+            8
+          ],
+          [
+            "0",
+            7
+          ],
+          [
+            "pbo",
+            6
+          ],
+          [
+            "baseline",
+            5
+          ],
+          [
+            "2",
+            4
+          ],
+          [
+            "20",
+            4
+          ],
+          [
+            "8",
+            3
+          ],
+          [
+            "placebo",
+            3
+          ],
+          [
+            "4",
+            2
+          ],
+          [
+            "12",
+            2
+          ],
+          [
+            "1",
+            2
+          ],
+          [
+            "supine",
+            2
+          ],
+          [
+            "116",
+            2
+          ],
+          [
+            "mean",
+            2
+          ],
+          [
+            "change",
+            2
+          ],
+          [
+            "difference",
+            2
+          ],
+          [
+            "b",
+            2
+          ],
+          [
+            "p",
+            2
+          ],
+          [
+            "mmhg",
+            2
+          ]
+        ]
+      },
+      "normalization_comparison": {
+        "reference_tokens": 95,
+        "actual_tokens": 108,
+        "token_recall": 1.0,
+        "token_precision": 0.8796,
+        "missing_tokens_sample": []
+      },
+      "renderer_comparison": {
+        "reference_tokens": 108,
+        "actual_tokens": 2,
+        "token_recall": 0.0185,
+        "token_precision": 1.0,
+        "missing_tokens_sample": [
+          [
+            "10",
+            8
+          ],
+          [
+            "mk",
+            8
+          ],
+          [
+            "0",
+            7
+          ],
+          [
+            "pbo",
+            6
+          ],
+          [
+            "baseline",
+            5
+          ],
+          [
+            "2",
+            4
+          ],
+          [
+            "20",
+            4
+          ],
+          [
+            "placebo",
+            4
+          ],
+          [
+            "1",
+            3
+          ],
+          [
+            "8",
+            3
+          ],
+          [
+            "supine",
+            3
+          ],
+          [
+            "change",
+            3
+          ],
+          [
+            "and",
+            3
+          ],
+          [
+            "4",
+            2
+          ],
+          [
+            "12",
+            2
+          ],
+          [
+            "116",
+            2
+          ],
+          [
+            "mean",
+            2
+          ],
+          [
+            "difference",
+            2
+          ],
+          [
+            "in",
+            2
+          ],
+          [
+            "b",
+            2
+          ]
+        ]
+      }
+    },
+    {
+      "id": "libreoffice-powerpoint-hanging-indent-ppt",
+      "source": "libreoffice",
+      "path": "sd/qa/unit/data/ppt/hanging-indent.ppt",
+      "file": "libreoffice/powerpoint/hanging-indent.ppt",
+      "size": 138240,
+      "sha256": "545aa479718848510fbe23edbd3c7c504023f93fb722e6ead3f10bd34fdccffc",
+      "purpose": "hanging indentation",
+      "expect": "render",
+      "davros": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.018,
+        "peak_rss_mib": 27.53,
+        "sampled_peak_tree_rss_mib": 24.99,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              960.0,
+              540.0
+            ]
+          ],
+          "text_characters": 32,
+          "bytes": 14385
+        },
+        "valid_pdf": true,
+        "previews": [
+          "libreoffice-powerpoint-hanging-indent-ppt/davros/page-1.png"
+        ]
+      },
+      "status": "converted",
+      "reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.351,
+        "peak_rss_mib": 17.62,
+        "sampled_peak_tree_rss_mib": 22.93,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              720.0,
+              405.071
+            ]
+          ],
+          "text_characters": 28,
+          "bytes": 20022
+        },
+        "valid_pdf": true,
+        "previews": [
+          "libreoffice-powerpoint-hanging-indent-ppt/reference/page-1.png"
+        ]
+      },
+      "normalization": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 17.63,
+        "sampled_peak_tree_rss_mib": 0.7,
+        "stderr_tail": ""
+      },
+      "normalized_reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.388,
+        "peak_rss_mib": 17.63,
+        "sampled_peak_tree_rss_mib": 19.33,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              960.009,
+              540.0
+            ]
+          ],
+          "text_characters": 32,
+          "bytes": 20383
+        },
+        "valid_pdf": true,
+        "previews": [
+          "libreoffice-powerpoint-hanging-indent-ppt/normalized_reference/page-1.png"
+        ]
+      },
+      "comparison": {
+        "reference_tokens": 6,
+        "actual_tokens": 8,
+        "token_recall": 1.0,
+        "token_precision": 0.75,
+        "missing_tokens_sample": []
+      },
+      "normalization_comparison": {
+        "reference_tokens": 6,
+        "actual_tokens": 8,
+        "token_recall": 1.0,
+        "token_precision": 0.75,
+        "missing_tokens_sample": []
+      },
+      "renderer_comparison": {
+        "reference_tokens": 8,
+        "actual_tokens": 8,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      }
+    },
+    {
+      "id": "libreoffice-powerpoint-ppt-indentation-bullets-ppt",
+      "source": "libreoffice",
+      "path": "sd/qa/unit/data/ppt/ppt-indentation-bullets.ppt",
+      "file": "libreoffice/powerpoint/ppt-indentation-bullets.ppt",
+      "size": 139264,
+      "sha256": "59091fa1e735abdf2d16bfeb92128c5c92b2c53eafeba5cbb5a243ebf8065359",
+      "purpose": "bullet indentation",
+      "expect": "render",
+      "davros": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.054,
+        "peak_rss_mib": 31.09,
+        "sampled_peak_tree_rss_mib": 28.23,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              960.0,
+              540.0
+            ]
+          ],
+          "text_characters": 735,
+          "bytes": 14209
+        },
+        "valid_pdf": true,
+        "previews": [
+          "libreoffice-powerpoint-ppt-indentation-bullets-ppt/davros/page-1.png"
+        ]
+      },
+      "status": "converted",
+      "reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.33,
+        "peak_rss_mib": 17.64,
+        "sampled_peak_tree_rss_mib": 11.37,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              960.094,
+              540.0
+            ]
+          ],
+          "text_characters": 730,
+          "bytes": 18711
+        },
+        "valid_pdf": true,
+        "previews": [
+          "libreoffice-powerpoint-ppt-indentation-bullets-ppt/reference/page-1.png"
+        ]
+      },
+      "normalization": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.007,
+        "peak_rss_mib": 17.64,
+        "sampled_peak_tree_rss_mib": 0.58,
+        "stderr_tail": ""
+      },
+      "normalized_reference": {
+        "exit_code": 0,
+        "timeout": false,
+        "seconds": 0.387,
+        "peak_rss_mib": 17.64,
+        "sampled_peak_tree_rss_mib": 14.79,
+        "stderr_tail": "",
+        "pdf": {
+          "pages": 1,
+          "page_sizes_pt": [
+            [
+              960.009,
+              540.0
+            ]
+          ],
+          "text_characters": 735,
+          "bytes": 18233
+        },
+        "valid_pdf": true,
+        "previews": [
+          "libreoffice-powerpoint-ppt-indentation-bullets-ppt/normalized_reference/page-1.png"
+        ]
+      },
+      "comparison": {
+        "reference_tokens": 114,
+        "actual_tokens": 116,
+        "token_recall": 1.0,
+        "token_precision": 0.9828,
+        "missing_tokens_sample": []
+      },
+      "normalization_comparison": {
+        "reference_tokens": 114,
+        "actual_tokens": 116,
+        "token_recall": 1.0,
+        "token_precision": 0.9828,
+        "missing_tokens_sample": []
+      },
+      "renderer_comparison": {
+        "reference_tokens": 116,
+        "actual_tokens": 116,
+        "token_recall": 1.0,
+        "token_precision": 1.0,
+        "missing_tokens_sample": []
+      }
+    }
+  ],
+  "summary": {
+    "converted": 38,
+    "expected_rejection": 3,
+    "reference_failures": 1,
+    "normalized_reference_failures": 0
+  }
+}

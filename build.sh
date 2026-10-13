@@ -20,5 +20,5 @@ for family in ['Sans', 'Serif', 'Mono']:
             raise SystemExit(f'Missing {name}; install fonts-liberation')
         shutil.copyfile(matches[0], Path('output/native-preview/fonts') / name)
 PY
-cp fonts.conf THIRD-PARTY-NOTICES LICENSE output/native-preview/
+cp fonts.conf THIRD_PARTY_NOTICES LICENSE output/native-preview/
 python3 package-licenses.py

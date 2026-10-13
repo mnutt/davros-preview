@@ -14,7 +14,13 @@ Changes fix fractional padding, percentage precision, and prefixed SpreadsheetML
 
 office_oxide 0.1.13: MIT OR Apache-2.0 (locally modified)
 https://github.com/yfedoseev/office_oxide
-Changes preserve explicit XLS column widths and row heights through OOXML conversion, including blank rows.
+Changes preserve explicit XLS column widths and row heights (including blank
+rows), cell types, and number formats through OOXML conversion; recover DOC
+pictures stored in WordDocument and validate image-record scanning; preserve
+explicit DOC page breaks; pair automatic DOC footnote/endnote references with
+their bodies and write automatic note-body marks in DOCX; classify DOC comments
+correctly; avoid inferred headings for structured DOC paragraphs; preserve natural
+PNG proportions for fallback legacy images; and avoid invented PPT slide titles.
 
 Liberation Fonts: SIL Open Font License 1.1
 https://github.com/liberationfonts/liberation-fonts

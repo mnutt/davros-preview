@@ -4,3 +4,4 @@
 /dist/
 /tmp/
 __pycache__/
+/tests/corpus/files/

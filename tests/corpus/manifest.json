@@ -1,0 +1,449 @@
+{
+  "version": 1,
+  "sources": {
+    "poi": {
+      "repository": "https://github.com/apache/poi",
+      "revision": "01fb738668df871190d4b9af339bab51a7ee199e",
+      "license_files": [
+        {
+          "path": "legal/LICENSE",
+          "sha256": "6e7c918e5a49f677c1b85a9eb2d035cd85c217fc42af6b4a336964a434001a9c"
+        },
+        {
+          "path": "legal/NOTICE",
+          "sha256": "a89ff8b670bcacd3e98ebee64979e0569181c7942e9ad795f4222b25e5637a61"
+        }
+      ]
+    },
+    "libreoffice": {
+      "repository": "https://github.com/LibreOffice/core",
+      "revision": "1eddacafd9f49d0342f91a14dd966207f045b164",
+      "license_files": [
+        {
+          "path": "COPYING",
+          "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903"
+        },
+        {
+          "path": "COPYING.MPL",
+          "sha256": "1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5"
+        },
+        {
+          "path": "COPYING.LGPL",
+          "sha256": "a853c2ffec17057872340eee242ae4d96cbf2b520ae27d903e1b2fef1a5f9d1c"
+        }
+      ]
+    }
+  },
+  "fixtures": [
+    {
+      "id": "poi-word-simple-doc",
+      "source": "poi",
+      "path": "test-data/document/simple.doc",
+      "file": "poi/word/simple.doc",
+      "size": 19456,
+      "sha256": "4876e828e62d490fa188c7c4e47013e2e0dfdf02f5903dfd374bc0d2b2049ca1",
+      "purpose": "basic text",
+      "expect": "render"
+    },
+    {
+      "id": "poi-word-simple-table-doc",
+      "source": "poi",
+      "path": "test-data/document/simple-table.doc",
+      "file": "poi/word/simple-table.doc",
+      "size": 19456,
+      "sha256": "67d7fe8e0555c16516354498a5935f24eeef90beb5efbf526f93a1d6c734da43",
+      "purpose": "tables",
+      "expect": "render"
+    },
+    {
+      "id": "poi-word-table-merges-doc",
+      "source": "poi",
+      "path": "test-data/document/table-merges.doc",
+      "file": "poi/word/table-merges.doc",
+      "size": 11264,
+      "sha256": "bceea684bbf492fae57da88a133c3fd7ea9abd8355a89c6b9f31b9b0e2d68d3e",
+      "purpose": "merged table cells",
+      "expect": "render"
+    },
+    {
+      "id": "poi-word-Lists-doc",
+      "source": "poi",
+      "path": "test-data/document/Lists.doc",
+      "file": "poi/word/Lists.doc",
+      "size": 27648,
+      "sha256": "82b235ece31662a9b1b414f32a556d203261296e22689470a79007f0b29c37fa",
+      "purpose": "lists",
+      "expect": "render"
+    },
+    {
+      "id": "poi-word-DiffFirstPageHeadFoot-doc",
+      "source": "poi",
+      "path": "test-data/document/DiffFirstPageHeadFoot.doc",
+      "file": "poi/word/DiffFirstPageHeadFoot.doc",
+      "size": 27648,
+      "sha256": "674285298712213a7e0141182a2efc9d7f3ad6ebf4f5520b8405774ec3e5def0",
+      "purpose": "first-page headers and footers",
+      "expect": "render"
+    },
+    {
+      "id": "poi-word-footnote-doc",
+      "source": "poi",
+      "path": "test-data/document/footnote.doc",
+      "file": "poi/word/footnote.doc",
+      "size": 9728,
+      "sha256": "81a18ac63010789ca08c28de107658a308c758a3cfc667a6edf11ffe888d3e13",
+      "purpose": "footnotes",
+      "expect": "render"
+    },
+    {
+      "id": "poi-word-PngPicture-doc",
+      "source": "poi",
+      "path": "test-data/document/PngPicture.doc",
+      "file": "poi/word/PngPicture.doc",
+      "size": 14336,
+      "sha256": "259aa01f88c17bb4ad364d08ce62424959f51717b37d8a5578e3045f9eaede6b",
+      "purpose": "embedded PNG",
+      "expect": "render"
+    },
+    {
+      "id": "poi-word-PasswordProtected-doc",
+      "source": "poi",
+      "path": "test-data/document/PasswordProtected.doc",
+      "file": "poi/word/PasswordProtected.doc",
+      "size": 19968,
+      "sha256": "863d2216a6f5bb4cec0ea4131a05ae0822dbce347e2940155ef638c6d64935fe",
+      "purpose": "encrypted input",
+      "expect": "reject"
+    },
+    {
+      "id": "poi-word-DiffFirstPageHeadFoot-docx",
+      "source": "poi",
+      "path": "test-data/document/DiffFirstPageHeadFoot.docx",
+      "file": "poi/word/DiffFirstPageHeadFoot.docx",
+      "size": 14204,
+      "sha256": "e94332c7b86b1bbce960f93fec90078486ab8abc3913a024a24be391a0b42151",
+      "purpose": "modern header/footer control",
+      "expect": "render"
+    },
+    {
+      "id": "poi-word-VariousPictures-docx",
+      "source": "poi",
+      "path": "test-data/document/VariousPictures.docx",
+      "file": "poi/word/VariousPictures.docx",
+      "size": 103677,
+      "sha256": "c1eecbca7de9f99e21c677e1d5b045eaa1d5a442eff4c82f0cbe9af93726a070",
+      "purpose": "modern pictures",
+      "expect": "render"
+    },
+    {
+      "id": "poi-excel-Simple-xls",
+      "source": "poi",
+      "path": "test-data/spreadsheet/Simple.xls",
+      "file": "poi/excel/Simple.xls",
+      "size": 13824,
+      "sha256": "2b5ec8298bacffdca61c50f6f7607da0a4e63cf76fa011c62f203e6a66bc072a",
+      "purpose": "basic cells",
+      "expect": "render"
+    },
+    {
+      "id": "poi-excel-SimpleWithFormula-xls",
+      "source": "poi",
+      "path": "test-data/spreadsheet/SimpleWithFormula.xls",
+      "file": "poi/excel/SimpleWithFormula.xls",
+      "size": 13824,
+      "sha256": "73a99975b9ad250669bd49ffe2223ed50df8324775acfbc612740d38827913c9",
+      "purpose": "cached formula values",
+      "expect": "render"
+    },
+    {
+      "id": "poi-excel-DateFormats-xls",
+      "source": "poi",
+      "path": "test-data/spreadsheet/DateFormats.xls",
+      "file": "poi/excel/DateFormats.xls",
+      "size": 13824,
+      "sha256": "f3ac7e6f0f23e638cfeb0d34543e18f3b07cd93edd1e7a71be907c73a767310c",
+      "purpose": "date formatting",
+      "expect": "render"
+    },
+    {
+      "id": "poi-excel-SimpleWithStyling-xls",
+      "source": "poi",
+      "path": "test-data/spreadsheet/SimpleWithStyling.xls",
+      "file": "poi/excel/SimpleWithStyling.xls",
+      "size": 13824,
+      "sha256": "029d30c42f2f328bbca166bfba986b9aa8def448b7e238177999cd76602fe87b",
+      "purpose": "cell styling",
+      "expect": "render"
+    },
+    {
+      "id": "poi-excel-SimpleWithImages-xls",
+      "source": "poi",
+      "path": "test-data/spreadsheet/SimpleWithImages.xls",
+      "file": "poi/excel/SimpleWithImages.xls",
+      "size": 48128,
+      "sha256": "dd35970bf68df7bb609b681634602ead30001816009c791012d00b5563ab9314",
+      "purpose": "embedded images",
+      "expect": "render"
+    },
+    {
+      "id": "poi-excel-SimpleChart-xls",
+      "source": "poi",
+      "path": "test-data/spreadsheet/SimpleChart.xls",
+      "file": "poi/excel/SimpleChart.xls",
+      "size": 14336,
+      "sha256": "8fbef881f6d869515eca2c36dde5b74bc5ffc900ec586b01d0b547234e111569",
+      "purpose": "embedded chart",
+      "expect": "render"
+    },
+    {
+      "id": "poi-excel-SimpleWithPageBreaks-xls",
+      "source": "poi",
+      "path": "test-data/spreadsheet/SimpleWithPageBreaks.xls",
+      "file": "poi/excel/SimpleWithPageBreaks.xls",
+      "size": 18432,
+      "sha256": "b0634993f101dcce02e368f733a98b86dd05b3e6e29e4c1fe119f5cf3344865f",
+      "purpose": "page breaks",
+      "expect": "render"
+    },
+    {
+      "id": "poi-excel-password-xls",
+      "source": "poi",
+      "path": "test-data/spreadsheet/password.xls",
+      "file": "poi/excel/password.xls",
+      "size": 22528,
+      "sha256": "3ad12a829132d9c157d213c623af9c534b1449c42e93ab39b17ca53c909ac412",
+      "purpose": "encrypted input",
+      "expect": "reject"
+    },
+    {
+      "id": "poi-excel-SimpleMultiCell-xlsx",
+      "source": "poi",
+      "path": "test-data/spreadsheet/SimpleMultiCell.xlsx",
+      "file": "poi/excel/SimpleMultiCell.xlsx",
+      "size": 8123,
+      "sha256": "119b6e70c5bbca6ca3e46f981e0719c154d87203adb4b5b61210d726deab9f7a",
+      "purpose": "modern cells",
+      "expect": "render"
+    },
+    {
+      "id": "poi-excel-WithChart-xlsx",
+      "source": "poi",
+      "path": "test-data/spreadsheet/WithChart.xlsx",
+      "file": "poi/excel/WithChart.xlsx",
+      "size": 10138,
+      "sha256": "51f27aabf7417f5aaa0542857b6bb56a92d4afbabdc5c63f084c06f92b67429d",
+      "purpose": "modern chart",
+      "expect": "render"
+    },
+    {
+      "id": "poi-powerpoint-basic_test_ppt_file-ppt",
+      "source": "poi",
+      "path": "test-data/slideshow/basic_test_ppt_file.ppt",
+      "file": "poi/powerpoint/basic_test_ppt_file.ppt",
+      "size": 15360,
+      "sha256": "e8fd4c38ad72ce3735acbca0b60dd5870fb60f819c169e3947d166f4f1bcc79d",
+      "purpose": "basic slides",
+      "expect": "render"
+    },
+    {
+      "id": "poi-powerpoint-bullets-ppt",
+      "source": "poi",
+      "path": "test-data/slideshow/bullets.ppt",
+      "file": "poi/powerpoint/bullets.ppt",
+      "size": 18944,
+      "sha256": "38eab05ec9e0974e5e30aab218581de4af23fd9745631b0eb54fbdd990c446ab",
+      "purpose": "bullets",
+      "expect": "render"
+    },
+    {
+      "id": "poi-powerpoint-table_test-ppt",
+      "source": "poi",
+      "path": "test-data/slideshow/table_test.ppt",
+      "file": "poi/powerpoint/table_test.ppt",
+      "size": 122368,
+      "sha256": "4e5c3e64cb0de2b98e7f5d8f8259b4689cc52a3793bd4e0f011493284ee39d77",
+      "purpose": "tables",
+      "expect": "render"
+    },
+    {
+      "id": "poi-powerpoint-pictures-ppt",
+      "source": "poi",
+      "path": "test-data/slideshow/pictures.ppt",
+      "file": "poi/powerpoint/pictures.ppt",
+      "size": 75776,
+      "sha256": "5318e8486f47c7d9e838eaa4edfe385ba27d7d0ce145364792df53488430e98c",
+      "purpose": "embedded pictures",
+      "expect": "render"
+    },
+    {
+      "id": "poi-powerpoint-headers_footers-ppt",
+      "source": "poi",
+      "path": "test-data/slideshow/headers_footers.ppt",
+      "file": "poi/powerpoint/headers_footers.ppt",
+      "size": 12800,
+      "sha256": "9160be9bc9a4c65f54da5f91dee8e4fc21f53d0ee6fc7eb1e2c65ebc1ae0279a",
+      "purpose": "headers and footers",
+      "expect": "render"
+    },
+    {
+      "id": "poi-powerpoint-text-margins-ppt",
+      "source": "poi",
+      "path": "test-data/slideshow/text-margins.ppt",
+      "file": "poi/powerpoint/text-margins.ppt",
+      "size": 44032,
+      "sha256": "a27008c6fda5e17653febc45ac65ed702003efb49607079f186307a9c0a6ea56",
+      "purpose": "text positioning",
+      "expect": "render"
+    },
+    {
+      "id": "poi-powerpoint-Password_Protected-hello-ppt",
+      "source": "poi",
+      "path": "test-data/slideshow/Password_Protected-hello.ppt",
+      "file": "poi/powerpoint/Password_Protected-hello.ppt",
+      "size": 10752,
+      "sha256": "8d0dd9f53317a720687cf5234af0c021fab665194b09b9bb56a3f71b495bf45a",
+      "purpose": "encrypted input",
+      "expect": "reject"
+    },
+    {
+      "id": "poi-powerpoint-table_test-pptx",
+      "source": "poi",
+      "path": "test-data/slideshow/table_test.pptx",
+      "file": "poi/powerpoint/table_test.pptx",
+      "size": 28935,
+      "sha256": "b9c3eb4b198ef3e53a4ff1a5ef4118a5ce6ba1760592c553abf665b37dcac5f8",
+      "purpose": "modern tables",
+      "expect": "render"
+    },
+    {
+      "id": "poi-powerpoint-bar-chart-pptx",
+      "source": "poi",
+      "path": "test-data/slideshow/bar-chart.pptx",
+      "file": "poi/powerpoint/bar-chart.pptx",
+      "size": 44410,
+      "sha256": "79e1d218bfb2903e8dc8425a6b1997d9c1976f5a5f025bada85b0c47b5777969",
+      "purpose": "modern chart",
+      "expect": "render"
+    },
+    {
+      "id": "libreoffice-word-continuous-sections-doc",
+      "source": "libreoffice",
+      "path": "sw/qa/extras/ww8export/data/continuous-sections.doc",
+      "file": "libreoffice/word/continuous-sections.doc",
+      "size": 26624,
+      "sha256": "4a40cd7f2880a6d981caf1dad004ee060be07148a98f92db3484238d6166513f",
+      "purpose": "continuous sections",
+      "expect": "render"
+    },
+    {
+      "id": "libreoffice-word-commented-table-doc",
+      "source": "libreoffice",
+      "path": "sw/qa/extras/ww8export/data/commented-table.doc",
+      "file": "libreoffice/word/commented-table.doc",
+      "size": 27136,
+      "sha256": "33d235c3dcf3f6ac41e0a2a867c06b86503c2b815eebf7c9e1fa4dd26838f2ff",
+      "purpose": "table comments",
+      "expect": "render"
+    },
+    {
+      "id": "libreoffice-word-tdf104239_numbering-doc",
+      "source": "libreoffice",
+      "path": "sw/qa/extras/ww8export/data/tdf104239_numbering.doc",
+      "file": "libreoffice/word/tdf104239_numbering.doc",
+      "size": 52224,
+      "sha256": "62713fa50eeb1d50caa33de1cc3e618cc7aa7687a2f4d41275296c05925d676f",
+      "purpose": "numbering regression",
+      "expect": "render"
+    },
+    {
+      "id": "libreoffice-word-tdf56321_flipImage_both-doc",
+      "source": "libreoffice",
+      "path": "sw/qa/extras/ww8export/data/tdf56321_flipImage_both.doc",
+      "file": "libreoffice/word/tdf56321_flipImage_both.doc",
+      "size": 22528,
+      "sha256": "6ddad0e144e9ee423f1378b05df4295b8b194099e2718e736766fd746c24e66c",
+      "purpose": "flipped image",
+      "expect": "render"
+    },
+    {
+      "id": "libreoffice-excel-cell-multi-line-xls",
+      "source": "libreoffice",
+      "path": "sc/qa/unit/data/xls/cell-multi-line.xls",
+      "file": "libreoffice/excel/cell-multi-line.xls",
+      "size": 33792,
+      "sha256": "1edfbb525b7f63e9b5342337a2f4595b943eee2d2d3c7ffa1766e307b893a74c",
+      "purpose": "multiline cells",
+      "expect": "render"
+    },
+    {
+      "id": "libreoffice-excel-cell-borders-xls",
+      "source": "libreoffice",
+      "path": "sc/qa/unit/data/xls/cell-borders.xls",
+      "file": "libreoffice/excel/cell-borders.xls",
+      "size": 25088,
+      "sha256": "4722bfa239b04667d88a30a99ccb4eb09223dfa52373ccd3cfadcb4c26c34ceb",
+      "purpose": "cell borders",
+      "expect": "render"
+    },
+    {
+      "id": "libreoffice-excel-embedded-chart-xls",
+      "source": "libreoffice",
+      "path": "sc/qa/unit/data/xls/embedded-chart.xls",
+      "file": "libreoffice/excel/embedded-chart.xls",
+      "size": 13824,
+      "sha256": "18f8f4292446f1be6f6aefeef4a805f63ee3bfd21e68b1e65cec8f99f85a16f3",
+      "purpose": "embedded chart",
+      "expect": "render"
+    },
+    {
+      "id": "libreoffice-excel-file-with-png-image-xls",
+      "source": "libreoffice",
+      "path": "sc/qa/unit/data/xls/file-with-png-image.xls",
+      "file": "libreoffice/excel/file-with-png-image.xls",
+      "size": 49152,
+      "sha256": "d427f083b912e73e453e0a110d1b807e8adb26c93f40d2a7ba9019abe299275e",
+      "purpose": "PNG image",
+      "expect": "render"
+    },
+    {
+      "id": "libreoffice-powerpoint-FillPatterns-ppt",
+      "source": "libreoffice",
+      "path": "sd/qa/unit/data/ppt/FillPatterns.ppt",
+      "file": "libreoffice/powerpoint/FillPatterns.ppt",
+      "size": 19968,
+      "sha256": "913f83c38c7e665105aac2df8f229be42986ccb1c5e6d8f55e9c6562b946817f",
+      "purpose": "pattern fills",
+      "expect": "render"
+    },
+    {
+      "id": "libreoffice-powerpoint-crop-ppt",
+      "source": "libreoffice",
+      "path": "sd/qa/unit/data/ppt/crop.ppt",
+      "file": "libreoffice/powerpoint/crop.ppt",
+      "size": 147456,
+      "sha256": "8c3cafad29a2bf79dce6ade642e8cbae7ae441cbb0b47281b7d85d1d7ed646e0",
+      "purpose": "image cropping",
+      "expect": "render"
+    },
+    {
+      "id": "libreoffice-powerpoint-hanging-indent-ppt",
+      "source": "libreoffice",
+      "path": "sd/qa/unit/data/ppt/hanging-indent.ppt",
+      "file": "libreoffice/powerpoint/hanging-indent.ppt",
+      "size": 138240,
+      "sha256": "545aa479718848510fbe23edbd3c7c504023f93fb722e6ead3f10bd34fdccffc",
+      "purpose": "hanging indentation",
+      "expect": "render"
+    },
+    {
+      "id": "libreoffice-powerpoint-ppt-indentation-bullets-ppt",
+      "source": "libreoffice",
+      "path": "sd/qa/unit/data/ppt/ppt-indentation-bullets.ppt",
+      "file": "libreoffice/powerpoint/ppt-indentation-bullets.ppt",
+      "size": 139264,
+      "sha256": "59091fa1e735abdf2d16bfeb92128c5c92b2c53eafeba5cbb5a243ebf8065359",
+      "purpose": "bullet indentation",
+      "expect": "render"
+    }
+  ]
+}

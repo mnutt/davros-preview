@@ -1,13 +1,565 @@
+--- a/src/convert_doc.rs
++++ b/src/convert_doc.rs
+@@ -13,17 +13,6 @@
+ /// heuristic over the sanitised text — the original `.doc` behaviour.
+ pub(crate) fn doc_to_ir(doc: &DocDocument) -> DocumentIR {
+     let paragraphs = doc.paragraphs();
+-    // One whole-document decision, taken before the walk, gated on the
+-    // *outcome*: run the line-shape heading guess only when no paragraph
+-    // resolved a real outline level.
+-    //
+-    // Gating on "the document has a stylesheet" instead would be wrong —
+-    // a parsed style sheet is not evidence a document uses headings, and
+-    // letters, memos and forms with a valid STSH containing no heading
+-    // styles would silently lose their headings, and with them
+-    // `metadata.title` and `Section.title`, both of which are derived from
+-    // the first `Element::Heading` below.
+-    let has_structured_headings = paragraphs.iter().any(|p| p.props.outline_level.is_some());
+     let mut warnings = doc.warnings().to_vec();
+
+     // One IR `Section` per document section. `build_paragraphs` ends a
+@@ -76,7 +65,6 @@
+                 }
+                 flattened += walk_paragraphs(
+                     &group[chunk_start..=j],
+-                    has_structured_headings,
+                     &mut elements,
+                     doc.list_formatting(),
+                 );
+@@ -85,7 +73,6 @@
+             }
+             flattened += walk_paragraphs(
+                 &group[chunk_start..],
+-                has_structured_headings,
+                 &mut elements,
+                 doc.list_formatting(),
+             );
+@@ -165,8 +152,16 @@
+     // main text in the same character space. Their `ccp*` lengths were
+     // parsed and never used, so none of this reached a consumer.
+     if let Some(section) = sections.last_mut() {
++        for legacy in doc.notes() {
++            let note = Note { id: legacy.id, marker: None, content: story_paragraphs(&legacy.text), author: None };
++            section.elements.push(if legacy.endnote { Element::Endnote(note) } else { Element::Footnote(note) });
++        }
+         let mut next_id = 0u32;
+         for sub in doc.subdocuments() {
++            if matches!(sub.kind, crate::doc::SubDocumentKind::Footnotes | crate::doc::SubDocumentKind::Endnotes)
++                && doc.notes().iter().any(|n| n.endnote == (sub.kind == crate::doc::SubDocumentKind::Endnotes)) {
++                continue;
++            }
+             // Already represented structurally on `Section.header`/
+             // `.footer`/etc above — don't also dump the merged blob as a
+             // generic TextBox.
+@@ -386,7 +381,7 @@
+         self.ensure_open();
+         if !p.text.is_empty() {
+             self.cell.push(Element::Paragraph(Paragraph {
+-                content: inline_content_for(&p.text, &p.hyperlinks, &p.chp_runs),
++                content: inline_content_for(&p.text, &p.hyperlinks, &p.chp_runs, &p.note_refs),
+                 // `tabs` is always empty in the tables-only build (it is
+                 // populated by the list/tab-stop PR); cloning keeps the IR
+                 // shape uniform with the list path.
+@@ -687,7 +682,6 @@
+ /// Returns how many tables holding nested tables were flattened.
+ fn walk_paragraphs(
+     paragraphs: &[DocParagraph],
+-    has_structured_headings: bool,
+     elements: &mut Vec<Element>,
+     list_formatting: &ListFormatting,
+ ) -> usize {
+@@ -717,7 +711,7 @@
+             // the IR at all.
+             table.flush(elements);
+             flush_list(&mut list_items, list_ilfo.take(), list_formatting, elements);
+-            emit_heading(&p.text, lvl + 1, elements, &p.hyperlinks, &p.chp_runs);
++            emit_heading(&p.text, lvl + 1, elements, &p.hyperlinks, &p.chp_runs, &p.note_refs);
+         } else if is_doc_list_item(p.props.ilfo) {
+             // List membership is keyed on `ilfo` (sprmPIlfo, `0x460B`), not on
+             // `ilvl`: per [MS-DOC] §2.4.6.3 a paragraph is a list item only when
+@@ -727,26 +721,25 @@
+             if list_ilfo.is_none() {
+                 list_ilfo = p.props.ilfo;
+             }
+-            list_items.push((ilvl, inline_content_for(&p.text, &p.hyperlinks, &p.chp_runs)));
++            list_items.push((ilvl, inline_content_for(&p.text, &p.hyperlinks, &p.chp_runs, &p.note_refs)));
+         } else {
+             table.flush(elements);
+             flush_list(&mut list_items, list_ilfo.take(), list_formatting, elements);
+-            if has_structured_headings {
+-                elements.push(Element::Paragraph(Paragraph {
+-                    content: inline_content_for(&p.text, &p.hyperlinks, &p.chp_runs),
+-                    tabs: p.props.tabs.clone(),
+-                    alignment: p.props.alignment.clone(),
+-                    indent_left_twips: p.props.indent_left_twips,
+-                    indent_right_twips: p.props.indent_right_twips,
+-                    first_line_indent_twips: p.props.first_line_indent_twips,
+-                    space_before_twips: p.props.space_before_twips,
+-                    space_after_twips: p.props.space_after_twips,
+-                    line_spacing: p.props.line_spacing.clone(),
+-                    ..Default::default()
+-                }));
+-            } else {
+-                emit_prose(&p.text, &p.props, elements, &p.hyperlinks, &p.chp_runs);
+-            }
++            // PAPX/CHPX already describe this paragraph. Guessing a heading
++            // from short/all-caps text creates a visible style absent from DOC.
++            elements.push(Element::Paragraph(Paragraph {
++                content: inline_content_for(&p.text, &p.hyperlinks, &p.chp_runs, &p.note_refs),
++                tabs: p.props.tabs.clone(),
++                alignment: p.props.alignment.clone(),
++                indent_left_twips: p.props.indent_left_twips,
++                indent_right_twips: p.props.indent_right_twips,
++                first_line_indent_twips: p.props.first_line_indent_twips,
++                space_before_twips: p.props.space_before_twips,
++                space_after_twips: p.props.space_after_twips,
++                line_spacing: p.props.line_spacing.clone(),
++                ..Default::default()
++            }));
++
+         }
+     }
+     table.flush(elements);
+@@ -804,17 +797,31 @@
+     text: &str,
+     hyperlinks: &[HyperlinkSpan],
+     chp_runs: &[(std::ops::Range<usize>, ChpProps)],
++    notes: &[(usize, InlineContent)],
+ ) -> Vec<InlineContent> {
+     let mut out = Vec::new();
+-    let mut base = 0usize;
+-    for seg in text.split('\n') {
+-        push_segment(seg, base, hyperlinks, chp_runs, &mut out);
+-        base += seg.len() + 1; // +1 for the '\n' the split consumed
+-        out.push(InlineContent::LineBreak);
+-    }
+-    // Drop the trailing `LineBreak` appended after the final segment.
+-    if matches!(out.last(), Some(InlineContent::LineBreak)) {
+-        out.pop();
++    let mut boundaries = std::collections::BTreeSet::from([0, text.len()]);
++    for (offset, _) in text.char_indices().filter(|(_, ch)| matches!(ch, '\n' | '\x0c')) {
++        boundaries.insert(offset);
++        boundaries.insert(offset + 1);
++    }
++    for (offset, _) in notes {
++        if text.is_char_boundary(*offset) { boundaries.insert(*offset); }
++    }
++    let boundaries: Vec<_> = boundaries.into_iter().collect();
++    let mut note_index = 0;
++    for (i, &offset) in boundaries.iter().enumerate() {
++        while let Some((at, reference)) = notes.get(note_index) {
++            if *at > offset { break; }
++            if *at == offset { out.push(reference.clone()); }
++            note_index += 1;
++        }
++        let Some(&end) = boundaries.get(i + 1) else { break; };
++        match &text[offset..end] {
++            "\n" => out.push(InlineContent::LineBreak),
++            "\x0c" => out.push(InlineContent::PageBreak),
++            segment => push_segment(segment, offset, hyperlinks, chp_runs, &mut out),
++        }
+     }
+     if out.is_empty() {
+         // Genuinely empty input: keep a single empty run so the content
+@@ -953,6 +960,10 @@
+         .collect()
+ }
+
++fn trim_note_refs(notes: &[(usize, InlineContent)], start: usize, len: usize) -> Vec<(usize, InlineContent)> {
++    notes.iter().map(|(at, reference)| (at.saturating_sub(start).min(len), reference.clone())).collect()
++}
++
+ /// Classify a prose paragraph as a heading or paragraph and push it.
+ ///
+ /// Mirrors the line-based heuristic so a PAPX-bearing document keeps the same
+@@ -964,19 +975,24 @@
+     elements: &mut Vec<Element>,
+     hyperlinks: &[HyperlinkSpan],
+     chp_runs: &[(std::ops::Range<usize>, ChpProps)],
++    notes: &[(usize, InlineContent)],
+ ) {
+-    let trimmed = text.trim();
+-    if trimmed.is_empty() {
++    let trimmed = text.trim_matches(|c: char| c.is_whitespace() && c != '\x0c');
++    if trimmed.is_empty() && notes.is_empty() {
+         return;
+     }
+-    let trim_start = text.len() - text.trim_start().len();
++    let trim_start = text.len()
++        - text
++            .trim_start_matches(|c: char| c.is_whitespace() && c != '\x0c')
++            .len();
+     let hyperlinks = shift_hyperlinks_for_trim(hyperlinks, trim_start, trimmed.len());
+     let chp_runs = shift_chp_runs_for_trim(chp_runs, trim_start, trimmed.len());
+     // A heading is not also bold text: forcing `bold` on every span
+     // rendered `# **Title**` / `<h1><strong>` — the same defect the DOCX
+     // converter had for a heading style's own `<w:b/>`. Real per-run
+     // formatting inside the heading is kept.
+-    let content = inline_content_for(trimmed, &hyperlinks, &chp_runs);
++    let notes = trim_note_refs(notes, trim_start, trimmed.len());
++    let content = inline_content_for(trimmed, &hyperlinks, &chp_runs, &notes);
+     elements.push(Element::Heading(Heading {
+         level: level.clamp(1, 6),
+         content,
+@@ -996,9 +1012,10 @@
+     elements: &mut Vec<Element>,
+     hyperlinks: &[HyperlinkSpan],
+     chp_runs: &[(std::ops::Range<usize>, ChpProps)],
++    notes: &[(usize, InlineContent)],
+ ) {
+-    let trimmed = text.trim();
+-    if trimmed.is_empty() {
++    let trimmed = text.trim_matches(|c: char| c.is_whitespace() && c != '\x0c');
++    if trimmed.is_empty() && notes.is_empty() {
+         return;
+     }
+
+@@ -1015,10 +1032,14 @@
+     if is_heading {
+         // Honour soft line breaks inside headings too: split on `'\n'` (the
+         // sanitised form of `0x0B`) and keep each segment bold.
+-        let trim_start = text.len() - text.trim_start().len();
++        let trim_start = text.len()
++            - text
++                .trim_start_matches(|c: char| c.is_whitespace() && c != '\x0c')
++                .len();
+         let shifted = shift_hyperlinks_for_trim(hyperlinks, trim_start, trimmed.len());
+         let shifted_chp = shift_chp_runs_for_trim(chp_runs, trim_start, trimmed.len());
+-        let content = inline_content_for(trimmed, &shifted, &shifted_chp);
++        let notes = trim_note_refs(notes, trim_start, trimmed.len());
++        let content = inline_content_for(trimmed, &shifted, &shifted_chp, &notes);
+         elements.push(Element::Heading(Heading {
+             level: if elements.is_empty() { 1 } else { 2 },
+             content,
+@@ -1026,7 +1047,7 @@
+         }));
+     } else {
+         elements.push(Element::Paragraph(Paragraph {
+-            content: inline_content_for(text, hyperlinks, chp_runs),
++            content: inline_content_for(text, hyperlinks, chp_runs, notes),
+             tabs: props.tabs.clone(),
+             alignment: props.alignment.clone(),
+             indent_left_twips: props.indent_left_twips,
+@@ -1110,7 +1131,7 @@
+
+ fn line_heuristic(text: &str, elements: &mut Vec<Element>) {
+     for line in text.lines() {
+-        emit_prose(line, &PapProps::default(), elements, &[], &[]);
++        emit_prose(line, &PapProps::default(), elements, &[], &[], &[]);
+     }
+ }
+
+@@ -1137,7 +1158,7 @@
+     match kind {
+         K::Footnotes => "footnote",
+         K::HeadersFooters => "header/footer",
+-        K::Comments => "comment",
++        K::Comments => "Comment",
+         K::Endnotes => "endnote",
+         K::TextBoxes => "text box",
+         K::HeaderTextBoxes => "header text box",
+@@ -1165,6 +1186,16 @@
+     /// Regression for Medium #1: boundaries that differ by only a few twips
+     /// across rows (Word rounds per row) must be snapped together, otherwise
+     /// a spurious grid edge inflates `col_span` for every cell spanning it.
++    #[test]
++    fn structured_prose_is_not_promoted_to_a_heading() {
++        let mut elements = Vec::new();
++        walk_paragraphs(&[para("Short first line", PapProps::default()), para("ALL CAPS", PapProps::default())], &mut elements, &ListFormatting::default());
++        assert!(elements.iter().all(|e| matches!(e, Element::Paragraph(_))));
++        let mut elements = Vec::new();
++        walk_paragraphs(&[para("Real heading", PapProps { outline_level: Some(0), ..Default::default() })], &mut elements, &ListFormatting::default());
++        assert!(matches!(elements[0], Element::Heading(_)));
++    }
++
+     #[test]
+     fn test_column_edge_tolerance_collapses_near_boundaries() {
+         // Row 0 and row 1 share edges 0/2000; row 1's middle edge is 3 twips
+@@ -1198,6 +1229,7 @@
+             terminator: '\r',
+             props,
+             hyperlinks: Vec::new(),
++            note_refs: Vec::new(),
+             cp_end: 0,
+             chp_runs: Vec::new(),
+         }
+@@ -1219,11 +1251,12 @@
+                 range: link_start..link_end,
+                 url: "http://testuri.org/".to_string(),
+             }],
++            note_refs: Vec::new(),
+             cp_end: 0,
+             chp_runs: Vec::new(),
+         };
+         let mut els = Vec::new();
+-        walk_paragraphs(&[p], false, &mut els, &ListFormatting::default());
++        walk_paragraphs(&[p], &mut els, &ListFormatting::default());
+         let Element::Paragraph(par) = &els[0] else {
+             panic!("expected a paragraph, got {:?}", els[0]);
+         };
+@@ -1271,6 +1304,7 @@
+             terminator: '\r',
+             props: PapProps::default(),
+             hyperlinks: Vec::new(),
++            note_refs: Vec::new(),
+             cp_end: 0,
+             chp_runs: vec![
+                 (
+@@ -1293,7 +1327,7 @@
+             ],
+         };
+         let mut els = Vec::new();
+-        walk_paragraphs(&[p], false, &mut els, &ListFormatting::default());
++        walk_paragraphs(&[p], &mut els, &ListFormatting::default());
+         let Element::Paragraph(par) = &els[0] else {
+             panic!("expected a paragraph, got {:?}", els[0]);
+         };
+@@ -1368,7 +1402,7 @@
+         };
+         let p = para("A centered, indented paragraph.", props);
+         let mut els = Vec::new();
+-        walk_paragraphs(&[p], false, &mut els, &ListFormatting::default());
++        walk_paragraphs(&[p], &mut els, &ListFormatting::default());
+         let Element::Paragraph(par) = &els[0] else {
+             panic!("expected a paragraph, got {:?}", els[0]);
+         };
+@@ -1379,6 +1413,47 @@
+         assert_eq!(par.space_before_twips, Some(200));
+         assert_eq!(par.space_after_twips, Some(100));
+         assert_eq!(par.line_spacing, Some(crate::ir::LineSpacing::Auto(360)));
++    }
++
++    #[test]
++    fn explicit_page_breaks_survive_sanitizing_and_docx_writing() {
++        use std::io::Read;
++        for raw in [
++            "Before.\x0cAfter.",
++            "\x0cTITLE",
++            "TITLE\x0c",
++            "\x0c",
++            "A.\x0bB.\x0cC.",
++        ] {
++            let text = raw.replace('\x0b', "\n");
++            let p = para(&text, PapProps::default());
++            let mut elements = Vec::new();
++            walk_paragraphs(&[p], &mut elements, &ListFormatting::default());
++            let ir = DocumentIR {
++                sections: vec![Section {
++                    elements,
++                    ..Default::default()
++                }],
++                ..Default::default()
++            };
++            let mut output = std::io::Cursor::new(Vec::new());
++            crate::create::ir_to_docx(&ir)
++                .write_to(&mut output)
++                .unwrap();
++            let mut zip = zip::ZipArchive::new(std::io::Cursor::new(output.into_inner())).unwrap();
++            let mut xml = String::new();
++            zip.by_name("word/document.xml")
++                .unwrap()
++                .read_to_string(&mut xml)
++                .unwrap();
++            assert_eq!(
++                xml.matches("<w:br w:type=\"page\"/>").count(),
++                1,
++                "{raw:?}: {xml}"
++            );
++            assert!(!xml.contains('\x0c'));
++            assert_eq!(xml.matches("<w:br/>").count(), raw.matches('\x0b').count());
++        }
+     }
+
+     /// Medium #4: a soft line break (`0x0B`, which `sanitize_text` maps to
+@@ -1393,7 +1468,7 @@
+             PapProps::default(),
+         );
+         let mut els = Vec::new();
+-        walk_paragraphs(&[p], false, &mut els, &ListFormatting::default());
++        walk_paragraphs(&[p], &mut els, &ListFormatting::default());
+         let Element::Paragraph(par) = &els[0] else {
+             panic!("expected a paragraph, got {:?}", els[0]);
+         };
+@@ -1434,7 +1509,7 @@
+         let row = para("", props);
+
+         let mut els = Vec::new();
+-        let flattened = walk_paragraphs(&[row], false, &mut els, &ListFormatting::default());
++        let flattened = walk_paragraphs(&[row], &mut els, &ListFormatting::default());
+
+         assert!(
+             els.iter().any(|e| matches!(e, Element::Table(_))),
+@@ -1463,7 +1538,7 @@
+             };
+             let p = para("Not a list item.", props);
+             let mut els = Vec::new();
+-            walk_paragraphs(&[p], false, &mut els, &ListFormatting::default());
++            walk_paragraphs(&[p], &mut els, &ListFormatting::default());
+             assert!(
+                 !els.iter().any(|e| matches!(e, Element::List(_))),
+                 "ilfo {ilfo:#06x} must not build a list"
+@@ -1490,7 +1565,7 @@
+         };
+         let p = para("1. Introduction", props);
+         let mut els = Vec::new();
+-        walk_paragraphs(&[p], false, &mut els, &ListFormatting::default());
++        walk_paragraphs(&[p], &mut els, &ListFormatting::default());
+
+         assert!(
+             els.iter()
+@@ -1514,7 +1589,7 @@
+         };
+         let p = para("A list item via the negated band.", props);
+         let mut els = Vec::new();
+-        walk_paragraphs(&[p], false, &mut els, &ListFormatting::default());
++        walk_paragraphs(&[p], &mut els, &ListFormatting::default());
+         assert!(
+             els.iter().any(|e| matches!(e, Element::List(_))),
+             "0xF802 (negated index) must still be a list item"
+@@ -1544,7 +1619,7 @@
+             ..PapProps::default()
+         };
+         let mut els = Vec::new();
+-        walk_paragraphs(&[para("Item", props)], false, &mut els, &list_formatting);
++        walk_paragraphs(&[para("Item", props)], &mut els, &list_formatting);
+         let Element::List(list) = &els[0] else {
+             panic!("expected a List element, got {els:#?}");
+         };
+@@ -1582,7 +1657,7 @@
+         };
+         let p = para("First", props);
+         let mut els = Vec::new();
+-        walk_paragraphs(&[p], false, &mut els, &list_formatting);
++        walk_paragraphs(&[p], &mut els, &list_formatting);
+
+         let Element::List(list) = &els[0] else {
+             panic!("expected a List element, got {els:#?}");
+@@ -1612,7 +1687,7 @@
+         };
+         let p = para("Bulleted", props);
+         let mut els = Vec::new();
+-        walk_paragraphs(&[p], false, &mut els, &list_formatting);
++        walk_paragraphs(&[p], &mut els, &list_formatting);
+
+         let Element::List(list) = &els[0] else {
+             panic!("expected a List element, got {els:#?}");
+@@ -1643,7 +1718,7 @@
+         };
+         let p = para("Numbered from 1", props);
+         let mut els = Vec::new();
+-        walk_paragraphs(&[p], false, &mut els, &list_formatting);
++        walk_paragraphs(&[p], &mut els, &list_formatting);
+
+         let Element::List(list) = &els[0] else {
+             panic!("expected a List element, got {els:#?}");
+@@ -1665,7 +1740,7 @@
+         };
+         let p = para("Item", props);
+         let mut els = Vec::new();
+-        walk_paragraphs(&[p], false, &mut els, &ListFormatting::default());
++        walk_paragraphs(&[p], &mut els, &ListFormatting::default());
+
+         let Element::List(list) = &els[0] else {
+             panic!("expected a List element, got {els:#?}");
+@@ -1689,7 +1764,7 @@
+         let p = para("Indented text carrying tab stops.", props);
+
+         let mut els = Vec::new();
+-        walk_paragraphs(&[p], false, &mut els, &ListFormatting::default());
++        walk_paragraphs(&[p], &mut els, &ListFormatting::default());
+         let Element::Paragraph(par) = &els[0] else {
+             panic!("expected a paragraph, got {:?}", els[0]);
+         };
+@@ -1713,6 +1788,7 @@
+                 ..PapProps::default()
+             },
+             hyperlinks: Vec::new(),
++            note_refs: Vec::new(),
+             cp_end: 0,
+             chp_runs: Vec::new(),
+         };
+@@ -1724,12 +1800,13 @@
+                 ..PapProps::default()
+             },
+             hyperlinks: Vec::new(),
++            note_refs: Vec::new(),
+             cp_end: 0,
+             chp_runs: Vec::new(),
+         };
+         let paragraphs = [mark(1), cell, mark(1)];
+         let mut els = Vec::new();
+-        walk_paragraphs(&paragraphs, false, &mut els, &ListFormatting::default());
++        walk_paragraphs(&paragraphs, &mut els, &ListFormatting::default());
+         assert!(
+             els.iter().any(|e| matches!(e, Element::Table(_))),
+             "f_in_table cell paragraph must be emitted inside a table"
+@@ -1750,6 +1827,7 @@
+                 ..PapProps::default()
+             },
+             hyperlinks: Vec::new(),
++            note_refs: Vec::new(),
+             cp_end: 0,
+             chp_runs: Vec::new(),
+         };
+@@ -1758,7 +1836,7 @@
+             in_table("last paragraph", '\r'),
+         ];
+         let mut els = Vec::new();
+-        walk_paragraphs(&paragraphs, false, &mut els, &ListFormatting::default());
++        walk_paragraphs(&paragraphs, &mut els, &ListFormatting::default());
+         let ir = DocumentIR {
+             sections: vec![Section {
+                 elements: els,
+@@ -1859,7 +1937,7 @@
+
+     fn is_heading_guess(text: &str) -> bool {
+         let mut els = Vec::new();
+-        emit_prose(text, &PapProps::default(), &mut els, &[], &[]);
++        emit_prose(text, &PapProps::default(), &mut els, &[], &[], &[]);
+         matches!(els.as_slice(), [Element::Heading(_)])
+     }
+
 --- a/src/convert_docx.rs
 +++ b/src/convert_docx.rs
 @@ -2091,6 +2091,7 @@
      }
- 
+
      Element::Table(Table {
 +        column_widths_chars: Vec::new(),
          rows: ir_rows,
          column_widths_twips: table.grid.iter().map(|t| t.0.max(0) as u32).collect(),
          border: tp
+--- a/src/convert_ppt.rs
++++ b/src/convert_ppt.rs
+@@ -298,7 +298,7 @@
+     // slide fallback below, so an image isn't attached twice.
+     let mut resolved_image_indices = std::collections::HashSet::new();
+
+-    for (slide_idx, slide) in doc.slides.iter().enumerate() {
++    for slide in &doc.slides {
+         let mut elements = Vec::new();
+         let mut slide_title: Option<String> = None;
+         // Presenter-only text, kept out of `elements` (which is "what the
+@@ -451,7 +451,9 @@
+             }));
+         }
+
+-        let title = slide_title.unwrap_or_else(|| format!("Slide {}", slide_idx + 1));
++        // An untitled slide must stay untitled; a generated label becomes
++        // visible title text when the IR is written to PPTX.
++        let title = slide_title;
+         // Legacy PPT's binary text extraction has no run-level formatting
+         // for notes text (unlike PPTX's XML-based TextBody), so each
+         // line becomes a plain paragraph — matches the old
+@@ -475,7 +477,7 @@
+         };
+
+         sections.push(Section {
+-            title: Some(title),
++            title,
+             elements,
+             speaker_notes,
+             hidden: slide.hidden,
 --- a/src/convert_xls.rs
 +++ b/src/convert_xls.rs
 @@ -83,8 +83,7 @@
@@ -33,14 +585,29 @@
 @@ -110,7 +110,8 @@
          // truncation.
          let mut rows_scanned = 0usize;
- 
+
 -        for (row_idx, row) in sheet.rows.iter().take(total_rows).enumerate() {
 +        for row_idx in 0..total_rows {
 +            let row = sheet.rows.get(row_idx).map(Vec::as_slice).unwrap_or(&[]);
              if budget == 0 {
                  break;
              }
-@@ -175,12 +176,13 @@
+@@ -137,7 +138,14 @@
+                     .as_ref()
+                     .and_then(|l| l[col_idx])
+                     .map(str::to_string);
++                let xf = sheet.xf.get(row_idx).and_then(|r| r.get(col_idx)).copied().unwrap_or(0);
++                let (data_type, raw_number, number_format, number_format_id) =
++                    sheet.formats.semantics(&row[col_idx], xf);
+                 cells.push(TableCell {
++                    data_type,
++                    raw_number,
++                    number_format,
++                    number_format_id,
+                     content: vec![Element::Paragraph(Paragraph {
+                         content: if text.is_empty() {
+                             Vec::new()
+@@ -175,12 +183,13 @@
              rows.push(TableRow {
                  cells,
                  is_header: row_idx == 0,
@@ -48,14 +615,14 @@
                  ..Default::default()
              });
          }
- 
+
          // Trailing all-empty rows go the same way as trailing empty cells.
 -        while rows.last().is_some_and(|r| r.cells.is_empty()) {
 +        while rows.last().is_some_and(|r| r.cells.is_empty() && r.height_twips.is_none()) {
              rows.pop();
          }
- 
-@@ -188,6 +190,8 @@
+
+@@ -188,6 +197,8 @@
              Vec::new()
          } else {
              vec![Element::Table(Table {
@@ -64,9 +631,57 @@
                  rows,
                  ..Default::default()
              })]
+@@ -386,12 +397,25 @@
+     }
+     let last = sections.last_mut().expect("just ensured non-empty");
+     for img in images {
++        // BLIP extraction keeps the encoded PNG bytes but no geometry.
++        // Recover natural dimensions instead of stretching every fallback
++        // image into the writer's default 4:3 rectangle.
++        let dimensions = png_dimensions(&img.data);
+         last.elements.push(Element::Image(Image {
++            pixel_width: dimensions.map(|(w, _)| w),
++            pixel_height: dimensions.map(|(_, h)| h),
+             data: Some(img.data.clone()),
+             format: ImageFormat::from_blip(&img.format),
+             ..Default::default()
+         }));
+     }
++}
++
++fn png_dimensions(bytes: &[u8]) -> Option<(u32, u32)> {
++    if bytes.get(..8)? != b"\x89PNG\r\n\x1a\n" || bytes.get(8..16)? != b"\0\0\0\rIHDR" { return None; }
++    let width = u32::from_be_bytes(bytes.get(16..20)?.try_into().ok()?);
++    let height = u32::from_be_bytes(bytes.get(20..24)?.try_into().ok()?);
++    (width > 0 && height > 0).then_some((width, height))
+ }
+
+ /// Whether a converted cell carries no text.
 --- a/src/create.rs
 +++ b/src/create.rs
-@@ -588,6 +588,11 @@
+@@ -383,6 +383,12 @@
+                 run.char_spacing_half_pt = span.char_spacing_half_pt;
+                 runs.push(run);
+             },
++            InlineContent::PageBreak => {
++                runs.push(Run {
++                    text: "\x0c".to_string(),
++                    ..Default::default()
++                });
++            }
+             InlineContent::LineBreak => {
+                 runs.push(Run {
+                     text: "\n".to_string(),
+@@ -435,7 +441,7 @@
+             || r.endnote_ref.is_some()
+             || r.comment_start.is_some()
+             || r.comment_ref.is_some()
+-            || r.text == "\n"
++            || matches!(r.text.as_str(), "\n" | "\x0c")
+     };
+     for r in runs {
+         if !is_marker(&r) {
+@@ -588,6 +594,11 @@
                              sheet.set_column_width(ci, w.clamp(3.0, 80.0));
                          }
                      }
@@ -78,7 +693,7 @@
                      // Columns currently claimed by a still-open vertical
                      // merge anchored in an earlier row, mapped to how many
                      // more rows (including the one about to be processed)
-@@ -603,6 +608,9 @@
+@@ -603,6 +614,9 @@
                      let mut active_spans: std::collections::BTreeMap<usize, usize> =
                          std::collections::BTreeMap::new();
                      for row in &t.rows {
@@ -88,9 +703,722 @@
                          let mut col = 0usize;
                          for cell in &row.cells {
                              while active_spans
+@@ -1687,7 +1701,7 @@
+                         font_name: span.font_name.clone(),
+                     });
+                 },
+-                InlineContent::LineBreak => {
++                InlineContent::LineBreak | InlineContent::PageBreak => {
+                     runs.push(RichRun {
+                         text: "\n".to_string(),
+                         ..Default::default()
+@@ -1913,7 +1927,9 @@
+             match item {
+                 // A dropped line break silently joins the words on either
+                 // side of it ("LINEA" + "LINEB" renders as "LINEALINEB").
+-                InlineContent::LineBreak => return Some(Run::line_break()),
++                InlineContent::LineBreak | InlineContent::PageBreak => {
++                    return Some(Run::line_break());
++                }
+                 InlineContent::Text(_) => {},
+                 _ => return None,
+             }
+--- a/src/doc/document.rs
++++ b/src/doc/document.rs
+@@ -19,10 +19,9 @@
+ pub struct DocDocument {
+     /// The raw extracted text (after sanitization).
+     text: String,
+-    /// The `Data` stream, decoded into `images` on first request. Every
+-    /// picture in a Word 97 file lives here, so the stream is the whole
+-    /// image payload; decoding it eagerly made `plain_text()` on a
+-    /// picture-heavy file pay for pictures it never emits.
++    /// The picture stream, decoded into `images` on first request.
++    /// Normally `Data`; some producers instead append the picture records
++    /// to `WordDocument` and omit `Data`. Keep that stream as a fallback.
+     data_stream: Vec<u8>,
+     images: std::sync::OnceLock<Vec<DocImage>>,
+     /// Structured main-text paragraphs with PAP (paragraph property) flags.
+@@ -36,6 +35,7 @@
+     /// were parsed and then never used, so none of this reached any
+     /// consumer.
+     subdocuments: Vec<SubDocument>,
++    notes: Vec<super::notes::LegacyNote>,
+     /// `true` when the CFB container has a `Macros/VBA` project storage
+     /// (or, for Word 6.0/95, stored macro text) — a cheap macro-presence
+     /// signal, no VBA interpretation.
+@@ -426,6 +426,7 @@
+         // Build structured paragraphs (with table / list PAP flags) from the
+         // PAPX FKP, when the FIB advertises one. Without it we cannot detect
+         // tables or lists, so `doc_to_ir` falls back to the line heuristic.
++        let notes = super::notes::parse(&word_doc, &table_stream, &pieces, &fib);
+         let paragraphs = if fib.fc_plcf_bte_papx != 0 && fib.lcb_plcf_bte_papx != 0 {
+             let fkp = parse_papx_paragraphs(
+                 &word_doc,
+@@ -441,6 +442,7 @@
+                 fib.lid,
+                 &chpx_runs,
+                 &section_ends,
++                &notes,
+             )
+         } else {
+             Vec::new()
+@@ -454,8 +456,10 @@
+             fib.lcb_plf_lfo,
+         );
+
+-        // The Data stream (if present) holds the pictures; decoded lazily.
+-        let data_stream = cfb.open_stream("Data").unwrap_or_default();
++        // Some Word 97 producers omit Data and append BLIPs to WordDocument
++        // (e.g. Apache POI's PngPicture.doc). Retain it for the same validated
++        // image scan; do not scan both streams and duplicate normal pictures.
++        let data_stream = cfb.open_stream("Data").unwrap_or(word_doc);
+         let has_macros = has_vba_project(&cfb);
+         // At minimum, recognize an embedded OLE object exists and
+         // surface its identity — before this, `ObjectPool` was never
+@@ -474,6 +478,7 @@
+             images: std::sync::OnceLock::new(),
+             paragraphs,
+             subdocuments,
++            notes,
+             has_macros,
+             text_complete,
+             summary_properties,
+@@ -525,6 +530,7 @@
+             images,
+             paragraphs: Vec::new(),
+             subdocuments,
++            notes: Vec::new(),
+             has_macros,
+             text_complete,
+             summary_properties,
+@@ -576,6 +582,7 @@
+             images: std::sync::OnceLock::new(),
+             paragraphs: Vec::new(),
+             subdocuments,
++            notes: Vec::new(),
+             has_macros: fib.ccp[3] != 0,
+             text_complete,
+             summary_properties: None,
+@@ -605,6 +612,9 @@
+         self.images
+             .get_or_init(|| extract_images(&self.data_stream))
+     }
++
++    /// Automatic note references paired with their individual note bodies.
++    pub(crate) fn notes(&self) -> &[super::notes::LegacyNote] { &self.notes }
+
+     /// Footnotes, headers, comments, endnotes and text boxes, in the order
+     /// the file stores them.
+@@ -1206,6 +1216,7 @@
+     #[test]
+     fn test_markdown_double_spacing() {
+         let doc = DocDocument {
++            notes: Vec::new(),
+             subdocuments: Vec::new(),
+             has_macros: false,
+             text_complete: true,
+@@ -1236,6 +1247,7 @@
+     #[test]
+     fn test_plain_text_names_embedded_objects() {
+         let doc = DocDocument {
++            notes: Vec::new(),
+             subdocuments: Vec::new(),
+             has_macros: false,
+             text_complete: true,
+@@ -1268,6 +1280,7 @@
+     #[test]
+     fn test_declared_title_is_metadata_not_section_content() {
+         let doc = DocDocument {
++            notes: Vec::new(),
+             subdocuments: Vec::new(),
+             has_macros: false,
+             text_complete: true,
+@@ -1295,6 +1308,7 @@
+     #[test]
+     fn test_plain_text_access() {
+         let doc = DocDocument {
++            notes: Vec::new(),
+             subdocuments: Vec::new(),
+             has_macros: false,
+             text_complete: true,
+@@ -1321,6 +1335,7 @@
+     #[test]
+     fn test_plain_text_and_markdown_include_subdocument_bodies() {
+         let doc = DocDocument {
++            notes: Vec::new(),
+             subdocuments: vec![
+                 SubDocument::from_raw(SubDocumentKind::Footnotes, "FOOTNOTE ONE"),
+                 SubDocument::from_raw(SubDocumentKind::Comments, "REVIEW NOTE"),
+@@ -1355,6 +1370,7 @@
+     #[test]
+     fn test_empty_subdocuments_are_skipped_in_both_renderers() {
+         let doc = DocDocument {
++            notes: Vec::new(),
+             subdocuments: vec![SubDocument::from_raw(SubDocumentKind::Comments, "  \n ")],
+             has_macros: false,
+             text_complete: true,
+@@ -1381,6 +1397,7 @@
+     #[test]
+     fn test_incomplete_text_reaches_metadata_as_truncated() {
+         let doc = DocDocument {
++            notes: Vec::new(),
+             subdocuments: Vec::new(),
+             has_macros: false,
+             text_complete: false,
+@@ -1415,6 +1432,7 @@
+
+     fn make_doc(text: &str) -> DocDocument {
+         DocDocument {
++            notes: Vec::new(),
+             subdocuments: Vec::new(),
+             has_macros: false,
+             text_complete: true,
+@@ -1437,6 +1455,7 @@
+     /// table / list walkers without a binary `.doc` fixture.
+     fn make_doc_with_paragraphs(paras: Vec<DocParagraph>) -> DocDocument {
+         DocDocument {
++            notes: Vec::new(),
+             subdocuments: Vec::new(),
+             has_macros: false,
+             text_complete: true,
+@@ -1462,6 +1481,7 @@
+             props,
+             hyperlinks: Vec::new(),
+             cp_end: 0,
++            note_refs: Vec::new(),
+             chp_runs: Vec::new(),
+         }
+     }
+--- a/src/doc/images.rs
++++ b/src/doc/images.rs
+@@ -33,7 +33,13 @@
+             let inst = ver_inst >> 4;
+
+             let data_start = pos + 8;
+-            let data_end = data_start.saturating_add(rec_len).min(data.len());
++            let data_end = data_start.saturating_add(rec_len);
++            // A type signature alone is not a record: this is mixed data.
++            // Reject truncated records without consuming subsequent pictures.
++            if ver_inst & 0xF != 0 || data_end > data.len() {
++                pos += 1;
++                continue;
++            }
+
+             // The same record decoder the PPT `Pictures` walk uses —
+             // UIDs skipped, compressed metafiles inflated — then the
+@@ -44,11 +50,13 @@
+                 if has_valid_signature(rec_type, &img.data) {
+                     img.index = images.len();
+                     images.push(img);
++                    pos = data_end;
++                    continue;
+                 }
+             }
+
+-            // Skip past this BLIP.
+-            pos = data_end;
++            // An invalid candidate may overlap a real record later on.
++            pos += 1;
+         } else if let Some((img, len)) = picf_picture_at(data, pos) {
+             images.push(DocImage {
+                 index: images.len(),
+@@ -217,6 +225,25 @@
+         // But UID + tag (17 bytes) then data won't start with 0xFF 0xD8
+         let images = extract_images(&data);
+         assert!(images.is_empty());
++    }
++
++    #[test]
++    fn invalid_candidate_does_not_hide_later_picture() {
++        for length in [150u32, u32::MAX] {
++            let mut data = make_blip_in_data(0xF01E, 0x6E0, b"\x89PNG\r\n\x1a\nIHDR");
++            data[2..4].copy_from_slice(&0xF01Du16.to_le_bytes());
++            data[4..8].copy_from_slice(&length.to_le_bytes());
++            let images = extract_images(&data);
++            assert_eq!(images.len(), 1);
++            assert_eq!(images[0].format, ImageFormat::Png);
++        }
++    }
++
++    #[test]
++    fn truncated_picture_is_not_accepted() {
++        let mut data = make_blip_in_data(0xF01E, 0x6E0, b"\x89PNG\r\n\x1a\nIHDR");
++        data[104..108].copy_from_slice(&u32::MAX.to_le_bytes());
++        assert!(extract_images(&data).is_empty());
+     }
+
+     /// A compressed EMF ([MS-ODRAW] §2.2.31, `compression` = 0x00) failed
+--- a/src/doc/mod.rs
++++ b/src/doc/mod.rs
+@@ -17,6 +17,7 @@
+ pub mod images;
+ mod list_format;
+ mod ole_objects;
++mod notes;
+ mod papx;
+ mod piece_table;
+ mod sprm;
+--- /dev/null
++++ b/src/doc/notes.rs
+@@ -0,0 +1,78 @@
++//! Automatic note references and bodies from the paired MS-DOC PLCs.
++//! https://learn.microsoft.com/en-us/openspecs/office_file_formats/ms-doc/3ed81d85-ea74-4790-8579-ab7f8eb651f7
++use super::fib::Fib;
++use super::piece_table::{Piece, extract_text_range, sanitize_text};
++
++#[derive(Debug, Clone)]
++pub(crate) struct LegacyNote {
++    pub cp: u32,
++    pub id: u32,
++    pub endnote: bool,
++    pub text: String,
++}
++
++fn u32_at(data: &[u8], offset: usize) -> Option<u32> {
++    Some(u32::from_le_bytes(data.get(offset..offset.checked_add(4)?)?.try_into().ok()?))
++}
++
++fn table_part<'a>(word: &[u8], table: &'a [u8], offset: usize) -> Option<&'a [u8]> {
++    let start = u32_at(word, offset)? as usize;
++    let len = u32_at(word, offset + 4)? as usize;
++    table.get(start..start.checked_add(len)?)
++}
++
++// Return main-text CP and note-story [start,end) for each automatic note.
++// Ignore the undefined final CP in both PLCs; never pair mismatched tables.
++fn ranges(refs: &[u8], bodies: &[u8], main_len: u32, story_len: u32) -> Vec<(u32, u32, u32, u32)> {
++    if refs.len() < 10 || (refs.len() - 4) % 6 != 0 { return Vec::new(); }
++    let count = (refs.len() - 4) / 6;
++    if bodies.len() != (count + 2) * 4 { return Vec::new(); }
++    let cps: Vec<u32> = (0..count).map(|i| u32_at(refs, i * 4).unwrap()).collect();
++    let bounds: Vec<u32> = (0..=count).map(|i| u32_at(bodies, i * 4).unwrap()).collect();
++    if cps.iter().any(|&cp| cp >= main_len) || cps.windows(2).any(|w| w[0] >= w[1])
++        || bounds.iter().any(|&cp| cp >= story_len) || bounds.windows(2).any(|w| w[0] >= w[1]) {
++        return Vec::new();
++    }
++    (0..count).filter_map(|i| {
++        let pos = (count + 1) * 4 + i * 2;
++        let automatic = u16::from_le_bytes([refs[pos], refs[pos + 1]]) != 0;
++        automatic.then_some((cps[i], bounds[i], bounds[i + 1], i as u32 + 1))
++    }).collect()
++}
++
++pub(crate) fn parse(word: &[u8], table: &[u8], pieces: &[Piece], fib: &Fib) -> Vec<LegacyNote> {
++    let mut notes = Vec::new();
++    let end_start = fib.text_len.saturating_add(fib.footnote_len)
++        .saturating_add(fib.header_len).saturating_add(fib.comment_len);
++    for (endnote, ref_offset, body_offset, start, len) in [
++        (false, 0xAA, 0xB2, fib.text_len, fib.footnote_len),
++        (true, 0x20A, 0x212, end_start, fib.endnote_len),
++    ] {
++        let (Some(refs), Some(bodies)) = (table_part(word, table, ref_offset), table_part(word, table, body_offset)) else { continue; };
++        for (cp, a, b, id) in ranges(refs, bodies, fib.text_len, len) {
++            if extract_text_range(word, pieces, cp, cp + 1, fib.lid) != "\x02" { continue; }
++            let text = sanitize_text(&extract_text_range(word, pieces, start.saturating_add(a), start.saturating_add(b), fib.lid));
++            notes.push(LegacyNote { cp, id, endnote, text });
++        }
++    }
++    notes.sort_by_key(|n| n.cp);
++    notes
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++    #[test]
++    fn pairs_note_bodies_and_ignores_undefined_final_cps() {
++        let mut refs: Vec<u8> = [3u32, 9, u32::MAX].into_iter().flat_map(u32::to_le_bytes).collect();
++        refs.extend([1u16, 1].into_iter().flat_map(u16::to_le_bytes));
++        let bodies: Vec<u8> = [0u32, 7, 12, u32::MAX].into_iter().flat_map(u32::to_le_bytes).collect();
++        assert_eq!(ranges(&refs, &bodies, 10, 13), vec![(3,0,7,1),(9,7,12,2)]);
++        assert!(ranges(&refs, &bodies[..12], 10, 13).is_empty());
++        assert!(ranges(&refs, &bodies, 9, 13).is_empty());
++        assert!(ranges(&refs, &bodies, 10, 12).is_empty());
++        for len in 0..refs.len() { assert!(ranges(&refs[..len], &bodies, 10, 13).is_empty()); }
++        refs[4..8].copy_from_slice(&3u32.to_le_bytes());
++        assert!(ranges(&refs, &bodies, 10, 13).is_empty());
++    }
++}
+--- a/src/doc/papx.rs
++++ b/src/doc/papx.rs
+@@ -18,7 +18,7 @@
+
+ use super::chpx::{FkpRun, resolve_chp_cp_runs, resolve_chp_segments};
+ use super::piece_table::{
+-    HyperlinkSpan, Piece, decode_cp_range, sanitize_text_with_hyperlinks_and_chp,
++    HyperlinkSpan, Piece, decode_cp_range, sanitize_with_offsets,
+ };
+ use super::sprm::{ChpProps, PapProps};
+
+@@ -59,6 +59,7 @@
+     /// `cp_end`. Lets shape anchors (`PlcSpaMom`) be placed after the
+     /// paragraph that holds them.
+     pub cp_end: u32,
++    pub note_refs: Vec<(usize, crate::ir::InlineContent)>,
+ }
+
+ /// Parse every PAPX FKP page referenced by the PlcfBtePapx.
+@@ -317,6 +318,7 @@
+     lid: u16,
+     chp_runs: &[FkpRun],
+     section_ends: &[u32],
++    notes: &[super::notes::LegacyNote],
+ ) -> Vec<DocParagraph> {
+     // PAPX runs in CP space: every FKP run intersected with every piece.
+     // A paragraph is then the text up to and including the next paragraph
+@@ -346,6 +348,7 @@
+
+     let mut out = Vec::with_capacity(pap.len());
+     let mut buf: Vec<char> = Vec::new();
++    let mut buf_cps: Vec<u32> = Vec::new();
+     let mut buf_props: Vec<ChpProps> = Vec::new();
+     let mut cursor = 0u32;
+     let empty = FkpParagraph {
+@@ -391,9 +394,10 @@
+                         continue;
+                     }
+                     buf.push(ch);
++                    buf_cps.push(this_cp);
+                     buf_props.push(props.clone());
+                     if is_mark {
+-                        emit_paragraph(&mut buf, &mut buf_props, run, cp, &mut out);
++                        emit_paragraph(&mut buf, &mut buf_props, &mut buf_cps, run, cp, notes, &mut out);
+                     }
+                 }
+             }
+@@ -403,9 +407,10 @@
+         // Text after the last mark (a truncated or mark-less file): keep
+         // it as a final paragraph.
+         buf.push('\r');
++        buf_cps.push(cursor);
+         buf_props.push(buf_props.last().cloned().unwrap_or_default());
+         let last = pap.last().map(|&(_, _, fp)| fp).unwrap_or(&empty);
+-        emit_paragraph(&mut buf, &mut buf_props, last, cursor, &mut out);
++        emit_paragraph(&mut buf, &mut buf_props, &mut buf_cps, last, cursor, notes, &mut out);
+     }
+     out
+ }
+@@ -415,15 +420,26 @@
+ fn emit_paragraph(
+     buf: &mut Vec<char>,
+     buf_props: &mut Vec<ChpProps>,
++    buf_cps: &mut Vec<u32>,
+     run: &FkpParagraph,
+     cp_end: u32,
++    notes: &[super::notes::LegacyNote],
+     out: &mut Vec<DocParagraph>,
+ ) {
+     let terminator = buf[buf.len() - 1];
+     let content_str: String = buf[..buf.len() - 1].iter().collect();
+     let content_props = &buf_props[..buf_props.len() - 1];
+-    let (content, hyperlinks, chp_spans) =
+-        sanitize_text_with_hyperlinks_and_chp(&content_str, content_props);
++    let mut offsets = Vec::new();
++    let (content, hyperlinks, chp_spans) = sanitize_with_offsets(&content_str, content_props, &mut offsets);
++    let first = buf_cps.first().copied().unwrap_or(cp_end);
++    let start = notes.partition_point(|n| n.cp < first);
++    let note_refs = notes[start..].iter().take_while(|n| n.cp < cp_end).filter_map(|n| {
++        let idx = buf_cps.binary_search(&n.cp).ok()?;
++        let offset = offsets.get(idx).copied().flatten()?;
++        let reference = crate::ir::FootnoteRef { note_id: n.id, marker: None };
++        Some((offset, if n.endnote { crate::ir::InlineContent::EndnoteRef(reference) }
++                     else { crate::ir::InlineContent::FootnoteRef(reference) }))
++    }).collect();
+     let props = super::sprm::extract_pap_props(&run.grpprl);
+     out.push(DocParagraph {
+         text: content,
+@@ -432,9 +448,11 @@
+         hyperlinks,
+         chp_runs: chp_spans,
+         cp_end,
++        note_refs,
+     });
+     buf.clear();
+     buf_props.clear();
++    buf_cps.clear();
+ }
+
+ #[cfg(test)]
+@@ -451,6 +469,34 @@
+             is_compressed: false,
+             prm_grpprl: Vec::new(),
+         }
++    }
++
++    #[test]
++    fn note_anchors_follow_utf16_cps_and_skip_field_instructions() {
++        let raw = "😀A\x02 \x13 HIDDEN\x02\x14shown\x15B\x02\r";
++        let bytes: Vec<_> = raw.encode_utf16().flat_map(u16::to_le_bytes).collect();
++        let len = (bytes.len() / 2) as u32;
++        let mut word = vec![0; 0x800];
++        word.extend(bytes);
++        let mut cp = 0;
++        let mut notes = Vec::new();
++        for ch in raw.chars() {
++            if ch == '\x02' {
++                notes.push(super::super::notes::LegacyNote {
++                    cp, id: notes.len() as u32 + 1, endnote: notes.len() == 2, text: "note".into(),
++                });
++            }
++            cp += ch.len_utf16() as u32;
++        }
++        let fkp = [FkpParagraph { fc_start: 0x800, fc_end: 0x800 + len * 2, grpprl: Vec::new() }];
++        let paragraphs = build_paragraphs(&word, &[unicode_piece(0x800, len)], &fkp, len, 0, &[], &[], &notes);
++        let p = &paragraphs[0];
++        assert_eq!(p.text, "😀A shownB");
++        assert_eq!(p.note_refs.len(), 2);
++        assert_eq!(p.note_refs[0].0, "😀A".len());
++        assert_eq!(p.note_refs[1].0, p.text.len());
++        assert!(matches!(&p.note_refs[0].1, crate::ir::InlineContent::FootnoteRef(r) if r.note_id == 1));
++        assert!(matches!(&p.note_refs[1].1, crate::ir::InlineContent::EndnoteRef(r) if r.note_id == 3));
+     }
+
+     /// A fast-saved layout: many pieces whose bytes are out of CP order,
+@@ -630,7 +676,7 @@
+             mk(5, 6, &rowmark), // "\u{7}" row mark
+         ];
+
+-        let paras = build_paragraphs(&word_doc, &pieces, &fkp, 6, 0, &[], &[]);
++        let paras = build_paragraphs(&word_doc, &pieces, &fkp, 6, 0, &[], &[], &[]);
+         assert_eq!(paras.len(), 4);
+         // leading mark
+         assert_eq!(paras[0].text, "");
+@@ -677,7 +723,7 @@
+             grpprl: Vec::new(),
+         };
+         let runs = vec![plain(0, 10), del, plain(23, n)];
+-        let paras = build_paragraphs(&word_doc, &pieces, &fkp, n, 0, &runs, &[]);
++        let paras = build_paragraphs(&word_doc, &pieces, &fkp, n, 0, &runs, &[], &[]);
+         assert_eq!(paras.len(), 1);
+         assert_eq!(paras[0].text, "Keep this here.");
+
+@@ -689,7 +735,7 @@
+             grpprl: vec![0x3C, 0x08, 0x01],
+         };
+         let runs = vec![plain(0, 10), hidden, plain(23, n)];
+-        let paras = build_paragraphs(&word_doc, &pieces, &fkp, n, 0, &runs, &[]);
++        let paras = build_paragraphs(&word_doc, &pieces, &fkp, n, 0, &runs, &[], &[]);
+         assert_eq!(paras[0].text, "Keep this here.");
+     }
+
+@@ -714,7 +760,7 @@
+         };
+         let fkp = vec![mk(0, 6), mk(6, 12)];
+
+-        let paras = build_paragraphs(&word_doc, &pieces, &fkp, 12, 0, &[], &[]);
++        let paras = build_paragraphs(&word_doc, &pieces, &fkp, 12, 0, &[], &[], &[]);
+         assert_eq!(paras.len(), 2);
+         assert_eq!(paras[0].text, "Hi 😀", "emoji must not desync the range");
+         assert_eq!(paras[0].terminator, '\r');
+@@ -747,7 +793,7 @@
+         };
+         let fkp = vec![mk(0, raw.chars().count() as u32)];
+         let paras =
+-            build_paragraphs(&word_doc, &pieces, &fkp, raw.chars().count() as u32, 0, &[], &[]);
++            build_paragraphs(&word_doc, &pieces, &fkp, raw.chars().count() as u32, 0, &[], &[], &[]);
+         assert_eq!(paras.len(), 1);
+         assert_eq!(paras[0].terminator, '\r');
+         let t = &paras[0].text;
+--- a/src/doc/piece_table.rs
++++ b/src/doc/piece_table.rs
+@@ -474,7 +474,7 @@
+ /// Word itself displays; the instruction text must be dropped entirely,
+ /// not just the three boundary characters around it.
+ pub fn sanitize_text(text: &str) -> String {
+-    strip_fields(text, None).0
++    strip_fields(text, None, None).0
+ }
+
+ /// As [`sanitize_text`], but also returns character-property run
+@@ -491,11 +491,18 @@
+ /// start or interrupt a run — consecutive *emitted* chars with equal
+ /// `ChpProps` merge into one span, exactly mirroring how consecutive
+ /// characters with unrelated formatting must not.
++#[cfg(test)]
+ pub(crate) fn sanitize_text_with_hyperlinks_and_chp(
+     text: &str,
+     char_props: &[super::sprm::ChpProps],
+ ) -> (String, Vec<HyperlinkSpan>, Vec<(std::ops::Range<usize>, super::sprm::ChpProps)>) {
+-    strip_fields(text, Some(char_props))
++    strip_fields(text, Some(char_props), None)
++}
++
++pub(crate) fn sanitize_with_offsets(
++    text: &str, props: &[super::sprm::ChpProps], offsets: &mut Vec<Option<usize>>,
++) -> (String, Vec<HyperlinkSpan>, Vec<(std::ops::Range<usize>, super::sprm::ChpProps)>) {
++    strip_fields(text, Some(props), Some(offsets))
+ }
+
+ /// Shared implementation for `sanitize_text`/`sanitize_text_with_hyperlinks_and_chp`.
+@@ -538,6 +545,7 @@
+ fn strip_fields(
+     text: &str,
+     char_props: Option<&[super::sprm::ChpProps]>,
++    mut offsets: Option<&mut Vec<Option<usize>>>,
+ ) -> (String, Vec<HyperlinkSpan>, Vec<(std::ops::Range<usize>, super::sprm::ChpProps)>) {
+     let mut out = String::with_capacity(text.len());
+     let mut hyperlinks = Vec::new();
+@@ -558,6 +566,9 @@
+     let visible = |stack: &[OpenField]| stack.iter().all(|f| f.in_result);
+
+     for (idx, ch) in text.chars().enumerate() {
++        if let Some(ref mut offsets) = offsets {
++            offsets.push(visible(&stack).then_some(out.len()));
++        }
+         match ch {
+             '\x13' => stack.push(OpenField {
+                 in_result: false,
+@@ -598,7 +609,13 @@
+             _ => {
+                 if visible(&stack) {
+                     track_chp_run(char_props, idx, &out, &mut chp_spans, &mut open_run);
+-                    push_mapped(ch, &mut out);
++                    // Structured paragraphs retain explicit page breaks.
++                    // The plain-text API continues to expose them as newlines.
++                    if ch == '\x0c' && char_props.is_some() {
++                        out.push(ch);
++                    } else {
++                        push_mapped(ch, &mut out);
++                    }
+                 } else if let Some(top) = stack.last_mut() {
+                     if !top.in_result {
+                         // The innermost field's own instruction text. Only
+@@ -675,6 +692,16 @@
+     /// stops at the first past it; over many pieces, every range — inside
+     /// one piece, across several, at the edges, past the end — decodes to
+     /// exactly the corresponding slice of the whole text.
++    #[test]
++    fn structured_text_keeps_page_breaks_distinct_from_soft_breaks() {
++        let raw = "Before\x0bmiddle\x0cafter";
++        let props = vec![super::super::sprm::ChpProps::default(); raw.chars().count()];
++        let (text, _, spans) = sanitize_text_with_hyperlinks_and_chp(raw, &props);
++        assert_eq!(text, "Before\nmiddle\x0cafter");
++        assert_eq!(spans.last().unwrap().0.end, text.len());
++        assert_eq!(sanitize_text(raw), "Before\nmiddle\nafter");
++    }
++
+     #[test]
+     fn test_decode_cp_range_over_many_pieces_matches_the_whole_text() {
+         let whole: Vec<char> = (0..600u32)
+--- a/src/docx/write.rs
++++ b/src/docx/write.rs
+@@ -159,6 +159,8 @@
+     /// carries `w:customMarkFollows="1"` and the note body gets the glyph
+     /// as its own leading run instead of an auto-number.
+     pub note_ref_marker: Option<String>,
++    /// Automatic mark in a note body: false for a footnote, true for an endnote.
++    pub note_body_ref: Option<bool>,
+     /// Comment range start (special run that emits only
+     /// `<w:commentRangeStart w:id>`). Written only for a comment added
+     /// with [`DocxWriter::add_comment`].
+@@ -300,6 +302,7 @@
+ // Internal data model
+ // ---------------------------------------------------------------------------
+
++#[derive(Clone)]
+ struct DocxParagraph {
+     style: Option<String>,
+     runs: Vec<Run>,
+@@ -2120,6 +2123,12 @@
+                 run.hyperlink_tooltip = span.hyperlink_tooltip.clone();
+                 runs.push(run);
+             },
++            InlineContent::PageBreak => {
++                runs.push(Run {
++                    text: "\x0c".to_string(),
++                    ..Default::default()
++                });
++            }
+             InlineContent::LineBreak => {
+                 runs.push(Run {
+                     text: "\n".to_string(),
+@@ -2730,6 +2739,18 @@
+ }
+
+ fn write_run(w: &mut Writer<Vec<u8>>, run: &Run) {
++    if let Some(endnote) = run.note_body_ref {
++        w.write_event(Event::Start(BytesStart::new("w:r"))).expect("note mark run");
++        w.write_event(Event::Start(BytesStart::new("w:rPr"))).expect("note mark properties");
++        let mut style = BytesStart::new("w:rStyle");
++        style.push_attribute(("w:val", if endnote { "EndnoteReference" } else { "FootnoteReference" }));
++        w.write_event(Event::Empty(style)).expect("note mark style");
++        w.write_event(Event::End(BytesEnd::new("w:rPr"))).expect("note mark properties end");
++        w.write_event(Event::Empty(BytesStart::new(if endnote { "w:endnoteRef" } else { "w:footnoteRef" }))).expect("note mark");
++        w.write_event(Event::End(BytesEnd::new("w:r"))).expect("note mark run end");
++        return;
++    }
++
+     if let Some(id) = run.comment_start {
+         if comment_is_written(id) {
+             let mut start = BytesStart::new("w:commentRangeStart");
+@@ -2769,7 +2790,11 @@
+     if run.has_rpr() {
+         write_rpr(w, run);
+     }
+-    if run.text == "\n" {
++    if run.text == "\x0c" {
++        let mut br = BytesStart::new("w:br");
++        br.push_attribute(("w:type", "page"));
++        w.write_event(Event::Empty(br)).expect("write page break");
++    } else if run.text == "\n" {
+         w.write_event(Event::Empty(BytesStart::new("w:br")))
+             .expect("write br");
+     } else {
+@@ -4362,10 +4387,30 @@
+         }
+
+         let mut ic = 0u32;
+-        for elem in &note.elements {
++        let mut body = note.elements.iter();
++        if note.marker.is_none() {
++            let mark = Run { note_body_ref: Some(is_endnote), ..Default::default() };
++            match body.next() {
++                Some(DocxElement::RichParagraph(p)) => {
++                    let mut p = p.clone();
++                    p.runs.insert(0, mark);
++                    write_rich_paragraph(&mut w, &p, links);
++                }
++                Some(DocxElement::Paragraph(p)) => {
++                    let mut p = p.clone();
++                    p.runs.insert(0, mark);
++                    write_paragraph(&mut w, &p);
++                }
++                first => {
++                    write_rich_paragraph(&mut w, &DocxRichParagraph { runs: vec![mark], props: Default::default() }, links);
++                    if let Some(elem) = first { write_docx_element(&mut w, elem, image_rids, &mut ic, links); }
++                }
++            }
++        }
++        for elem in body {
+             write_docx_element(&mut w, elem, image_rids, &mut ic, links);
+         }
+-        if note.elements.is_empty() {
++        if note.elements.is_empty() && note.marker.is_some() {
+             w.write_event(Event::Start(BytesStart::new("w:p")))
+                 .expect("write p");
+             w.write_event(Event::End(BytesEnd::new("w:p")))
 --- a/src/ir.rs
 +++ b/src/ir.rs
-@@ -1411,6 +1411,10 @@
+@@ -1283,6 +1283,8 @@
+     Text(TextSpan),
+     /// A line break within a paragraph.
+     LineBreak,
++    /// An explicit page break within a paragraph.
++    PageBreak,
+     /// An inline footnote reference mark.
+     FootnoteRef(FootnoteRef),
+     /// An inline endnote reference mark.
+@@ -1318,7 +1320,7 @@
+     for item in content {
+         match item {
+             InlineContent::Text(span) => out.push_str(&span.text),
+-            InlineContent::LineBreak => out.push('\n'),
++            InlineContent::LineBreak | InlineContent::PageBreak => out.push('\n'),
+             InlineContent::FootnoteRef(_)
+             | InlineContent::EndnoteRef(_)
+             | InlineContent::CommentStart(_)
+@@ -1411,6 +1413,10 @@
  /// A table with rows and cells.
  #[derive(Debug, Clone, PartialEq, Default, serde::Serialize, serde::Deserialize)]
  pub struct Table {
@@ -101,6 +1429,46 @@
      /// Rows in the table (first row is header when `is_header = true`).
      pub rows: Vec<TableRow>,
      /// Column widths in twips (may be shorter than the actual column count).
+--- a/src/ir_render.rs
++++ b/src/ir_render.rs
+@@ -499,7 +499,7 @@
+     for item in content {
+         match item {
+             InlineContent::Text(span) => out.push_str(&span.text),
+-            InlineContent::LineBreak => out.push('\n'),
++            InlineContent::LineBreak | InlineContent::PageBreak => out.push('\n'),
+             InlineContent::FootnoteRef(_)
+             | InlineContent::EndnoteRef(_)
+             | InlineContent::CommentStart(_)
+@@ -741,7 +741,7 @@
+                     },
+                 }
+             },
+-            InlineContent::LineBreak => {
++            InlineContent::LineBreak | InlineContent::PageBreak => {
+                 flush(&mut pending, &mut out);
+                 out.push_str("  \n");
+             },
+@@ -1225,7 +1225,7 @@
+
+                 out.push_str(&text);
+             },
+-            InlineContent::LineBreak => out.push_str("<br />"),
++            InlineContent::LineBreak | InlineContent::PageBreak => out.push_str("<br />"),
+             InlineContent::FootnoteRef(_)
+             | InlineContent::EndnoteRef(_)
+             | InlineContent::CommentStart(_)
+--- a/src/ppt/document.rs
++++ b/src/ppt/document.rs
+@@ -1101,7 +1101,7 @@
+             slides: vec![make_slide(vec![(TextType::Body, "content")])],
+         };
+         let ir = crate::convert_ppt::ppt_to_ir(&doc);
+-        assert_eq!(ir.sections[0].title.as_deref(), Some("Slide 1"));
++        assert_eq!(ir.sections[0].title, None, "do not create visible titles for untitled slides");
+     }
+
+     #[test]
 --- a/src/xls/workbook.rs
 +++ b/src/xls/workbook.rs
 @@ -116,6 +116,10 @@
@@ -158,10 +1526,43 @@
                              xf,
                              formats,
                              kind: current_kind.unwrap_or_default(),
-@@ -1527,6 +1554,63 @@
+@@ -1423,6 +1450,32 @@
+ }
+
+ impl NumberFormats {
++    pub(crate) fn semantics(&self, value: &CellValue, xf: u16)
++        -> (Option<crate::ir::CellDataType>, Option<f64>, Option<String>, Option<u32>)
++    {
++        use crate::ir::CellDataType as Ty;
++        use crate::xlsx::{date, numfmt};
++        let id = self.xf_numfmt.get(xf as usize).copied().unwrap_or(0) as u32;
++        let code = self.formats.get(&(id as u16)).cloned()
++            .or_else(|| numfmt::builtin_format_code(id).map(str::to_string));
++        let is_date = code.as_deref().map(date::is_date_format_string)
++            .unwrap_or_else(|| date::is_date_format_id(id));
++        let (ty, number) = match value {
++            CellValue::Empty => return (None, None, None, None),
++            // The OOXML writer currently uses the 1900 epoch. Until the
++            // workbook epoch is represented in IR, keep the existing ISO
++            // display text for 1904 dates rather than changing the date.
++            // Likewise, do not turn an unresolved regional date format
++            // into a General-formatted serial number.
++            CellValue::Number(_) if is_date && (self.date1904 || code.is_none()) => return (Some(Ty::Text), None, None, None),
++            CellValue::Number(n) => (if is_date { Ty::Date } else { Ty::Number }, Some(*n)),
++            CellValue::String(_) => (Ty::Text, None),
++            CellValue::Bool(b) => (Ty::Boolean, Some(if *b { 1.0 } else { 0.0 })),
++            CellValue::Error(_) => (Ty::Error, None),
++        };
++        (Some(ty), number, code.filter(|c| c != "General"), (id != 0 || self.formats.contains_key(&0)).then_some(id))
++    }
++
+     /// Render `value` the way Excel displays it under XF `xf`. Only a
+     /// number needs work; everything else borrows.
+     pub fn display<'v>(&self, value: &'v CellValue, xf: u16) -> std::borrow::Cow<'v, str> {
+@@ -1527,6 +1580,63 @@
  mod tests {
      use super::*;
- 
+
 +    #[test]
 +    fn dimensions_survive_biff_to_xlsx() {
 +        fn col(first: u16, last: u16, width: u16) -> Vec<u8> {
@@ -222,6 +1623,44 @@
      // ── Hand-built BIFF8 fixtures ─────────────────────────────────────────
      //
      // The record-walking state machine is the part several of these tests
+@@ -2573,6 +2683,37 @@
+         assert_eq!(detect_raw_biff(&mut cursor).unwrap(), None);
+         // ...and the reader is left where it was handed over.
+         assert_eq!(cursor.position(), 0);
++    }
++
++    #[test]
++    fn typed_dates_and_text_survive_xls_to_xlsx() {
++        use std::io::Read;
++        let formats = NumberFormats {
++            formats: [(165, "mm/dd/yyyy".into()), (166, "dd/mm/yyyy".into())].into(),
++            xf_numfmt: vec![165, 166, 0], date1904: false,
++        };
++        let sheet = Sheet {
++            name: "Dates".into(),
++            rows: vec![vec![CellValue::Number(39304.0), CellValue::Number(39304.0), CellValue::String("007".into())]],
++            xf: vec![vec![0,1,2]], formats: std::sync::Arc::new(formats), ..Default::default()
++        };
++        let ir = crate::convert_xls::xls_to_ir(&XlsDocument::from_sheets(vec![sheet]));
++        let mut out = std::io::Cursor::new(Vec::new());
++        crate::create::ir_to_xlsx(&ir).write_to(&mut out).unwrap();
++        let mut zip = zip::ZipArchive::new(std::io::Cursor::new(out.into_inner())).unwrap();
++        let mut xml = String::new();
++        zip.by_name("xl/worksheets/sheet1.xml").unwrap().read_to_string(&mut xml).unwrap();
++        assert_eq!(xml.matches("<v>39304</v>").count(), 2, "{xml}");
++        assert!(!xml.contains("2007-08-10"));
++        let mut styles = String::new();
++        zip.by_name("xl/styles.xml").unwrap().read_to_string(&mut styles).unwrap();
++        assert!(styles.contains("mm/dd/yyyy") && styles.contains("dd/mm/yyyy"));
++        assert!(xml.contains(">007<"), "{xml}");
++        let dates1904 = NumberFormats { xf_numfmt: vec![14], date1904: true, ..Default::default() };
++        assert_eq!(dates1904.semantics(&CellValue::Number(1.0), 0).0, Some(crate::ir::CellDataType::Text));
++        assert_eq!(dates1904.display(&CellValue::Number(1.0), 0), "1904-01-02");
++        let regional = NumberFormats { xf_numfmt: vec![57], ..Default::default() };
++        assert_eq!(regional.semantics(&CellValue::Number(39304.0), 0).0, Some(crate::ir::CellDataType::Text));
+     }
+
+     /// A workbook may override a built-in `numFmtId`; ECMA-376 §18.8.30
 --- a/src/xlsx/write.rs
 +++ b/src/xlsx/write.rs
 @@ -408,6 +408,7 @@
@@ -243,7 +1682,7 @@
 @@ -550,6 +552,16 @@
          self
      }
- 
+
 +    /// Set a row height in points, including rows without cell contents.
 +    pub fn set_row_height(&mut self, row: usize, height: f64) -> &mut Self {
 +        if in_grid(row, 0) && height.is_finite() && (0.0..=409.6).contains(&height) {
@@ -260,7 +1699,7 @@
 @@ -772,7 +784,13 @@
          self
      }
- 
+
 -    /// Set the width of a column in character units.
 +    /// Set a row height in points, including rows without cell contents.
 +    pub fn set_row_height(&mut self, row: usize, height: f64) -> &mut Self {
@@ -278,18 +1717,18 @@
                  let col_num = (*col_idx + 1).to_string();
 -                let width_str = format!("{width:.2}");
 +                let width_str = width.to_string();
- 
+
                  let mut col_elem = BytesStart::new("col");
                  col_elem.push_attribute(("min", col_num.as_str()));
 @@ -1310,13 +1328,18 @@
          w.write_event(Event::Start(BytesStart::new("sheetData")))?;
- 
+
          for (row_idx, row) in sheet.rows.iter().enumerate() {
 -            if row.is_empty() || row.iter().all(|c| c.is_none()) {
 +            if row.iter().all(|c| c.is_none()) && !sheet.row_heights.contains_key(&row_idx) {
                  continue;
              }
- 
+
              let row_num = (row_idx + 1).to_string();
              let mut row_elem = BytesStart::new("row");
              row_elem.push_attribute(("r", row_num.as_str()));
@@ -299,7 +1738,7 @@
 +                row_elem.push_attribute(("customHeight", "1"));
 +            }
              w.write_event(Event::Start(row_elem))?;
- 
+
              for (col_idx, cell) in row.iter().enumerate() {
 @@ -2928,7 +2951,7 @@
          for bad in ["inf", "NaN", "-5.00", "e30"] {
@@ -308,5 +1747,5 @@
 -        assert!(xml.contains("20.00"), "a valid width must survive: {xml}");
 +        assert!(xml.contains("width=\"20\""), "a valid width must survive: {xml}");
      }
- 
+
      /// `CT_Sheets` requires at least one `sheet`.
