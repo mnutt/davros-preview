@@ -16,8 +16,10 @@ PDF text remains selectable. Microsoft spreadsheet pages widen to fit all column
 natural size, while still paginating vertically. ODS uses source page geometry and
 paginates horizontally and vertically. Liberation Sans, Serif,
 and Mono (regular, bold, italic, bold italic), plus Noto Sans Regular for
-additional Unicode coverage, are bundled. Font substitution can
-change wrapping and pagination; scripts outside this font set are not supported.
+additional Unicode coverage, are bundled. These fonts do not cover every script.
+OpenDocument characters missing from all bundled fonts render as outlined boxes,
+with their original Unicode retained for copying and searching; conversion emits
+a warning and continues. Font substitution can change wrapping and pagination.
 
 ## Build and test
 

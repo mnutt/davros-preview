@@ -1554,11 +1554,10 @@ index 0000000..23911ab
 +        assert!(OdfChart::parse(&root, frame).is_none());
 +    }
 +}
-diff --git c/crates/lo_core/src/pdf_canvas.rs w/crates/lo_core/src/pdf_canvas.rs
-index 0a064b0..64e6f48 100644
---- c/crates/lo_core/src/pdf_canvas.rs
-+++ w/crates/lo_core/src/pdf_canvas.rs
-@@ -17,6 +17,7 @@ pub enum PdfFont {
+diff --git a/crates/lo_core/src/pdf_canvas.rs b/crates/lo_core/src/pdf_canvas.rs
+--- a/crates/lo_core/src/pdf_canvas.rs
++++ b/crates/lo_core/src/pdf_canvas.rs
+@@ -17,6 +17,7 @@
      Helvetica,
      HelveticaBold,
      HelveticaOblique,
@@ -1566,7 +1565,7 @@ index 0a064b0..64e6f48 100644
      Courier,
      TimesRoman,
      TimesBold,
-@@ -29,6 +30,7 @@ impl PdfFont {
+@@ -29,6 +30,7 @@
              Self::Helvetica => "F1",
              Self::HelveticaBold => "F2",
              Self::HelveticaOblique => "F3",
@@ -1574,7 +1573,7 @@ index 0a064b0..64e6f48 100644
              Self::Courier => "F4",
              Self::TimesRoman => "F5",
              Self::TimesBold => "F6",
-@@ -41,6 +43,7 @@ impl PdfFont {
+@@ -41,6 +43,7 @@
              Self::Helvetica => "Helvetica",
              Self::HelveticaBold => "Helvetica-Bold",
              Self::HelveticaOblique => "Helvetica-Oblique",
@@ -1582,9 +1581,9 @@ index 0a064b0..64e6f48 100644
              Self::Courier => "Courier",
              Self::TimesRoman => "Times-Roman",
              Self::TimesBold => "Times-Bold",
-@@ -49,13 +52,16 @@ impl PdfFont {
+@@ -49,13 +52,16 @@
      }
- 
+
      fn is_bold(self) -> bool {
 -        matches!(self, Self::HelveticaBold | Self::TimesBold)
 +        matches!(
@@ -1592,7 +1591,7 @@ index 0a064b0..64e6f48 100644
 +            Self::HelveticaBold | Self::HelveticaBoldOblique | Self::TimesBold
 +        )
      }
- 
+
      fn is_italic(self) -> bool {
          matches!(
              self,
@@ -1601,15 +1600,15 @@ index 0a064b0..64e6f48 100644
          )
      }
  }
-@@ -398,6 +404,7 @@ struct PdfImage {
+@@ -398,6 +404,7 @@
      height: u32,
      bytes: Vec<u8>,
      jpeg: bool,
 +    alpha: Option<Vec<u8>>,
  }
- 
+
  #[derive(Clone, Debug, Default)]
-@@ -435,6 +442,25 @@ impl PdfDocument {
+@@ -435,6 +442,25 @@
              height,
              bytes,
              jpeg: false,
@@ -1635,7 +1634,7 @@ index 0a064b0..64e6f48 100644
          });
          format!("Im{}", self.images.len())
      }
-@@ -445,6 +471,7 @@ impl PdfDocument {
+@@ -445,6 +471,7 @@
              height,
              bytes,
              jpeg: true,
@@ -1643,7 +1642,7 @@ index 0a064b0..64e6f48 100644
          });
          format!("Im{}", self.images.len())
      }
-@@ -480,6 +507,7 @@ impl PdfDocument {
+@@ -480,6 +507,7 @@
              PdfFont::TimesRoman,
              PdfFont::TimesBold,
              PdfFont::TimesItalic,
@@ -1651,7 +1650,7 @@ index 0a064b0..64e6f48 100644
          ] {
              objects.push(
                  format!(
-@@ -495,7 +523,17 @@ impl PdfDocument {
+@@ -495,7 +523,17 @@
              .collect::<Vec<_>>();
          let page_start = objects.len() + 1;
          let image_start = page_start + self.pages.len() * 2;
@@ -1670,7 +1669,7 @@ index 0a064b0..64e6f48 100644
          let annotation_count = self
              .pages
              .iter()
-@@ -513,7 +551,7 @@ impl PdfDocument {
+@@ -513,7 +551,7 @@
                  self.images
                      .iter()
                      .enumerate()
@@ -1679,7 +1678,7 @@ index 0a064b0..64e6f48 100644
                      .collect::<Vec<_>>()
                      .join(" ")
              )
-@@ -529,7 +567,9 @@ impl PdfDocument {
+@@ -529,7 +567,9 @@
                  .enumerate()
                  .map(|(font_index, object)| format!(" /FU{font_index} {object} 0 R"))
                  .collect::<String>();
@@ -1690,7 +1689,7 @@ index 0a064b0..64e6f48 100644
              let annotations = if page.links.is_empty() {
                  String::new()
              } else {
-@@ -565,13 +605,24 @@ impl PdfDocument {
+@@ -565,13 +605,24 @@
              } else {
                  ""
              };
@@ -1716,6 +1715,44 @@ index 0a064b0..64e6f48 100644
          }
          for (page_index, page) in self.pages.iter().enumerate() {
              let page_obj = page_start + page_index * 2;
+@@ -732,6 +783,13 @@
+     let descriptor_obj = type0_obj + 2;
+     let font_file_obj = type0_obj + 3;
+     let to_unicode_obj = type0_obj + 4;
++    let cid_mapping = if font.cid_to_gid.is_some() {
++        format!(" /CIDToGIDMap {} 0 R", type0_obj + 5)
++    } else if font.is_true_type {
++        " /CIDToGIDMap /Identity".into()
++    } else {
++        String::new()
++    };
+     let descendant_subtype = if font.is_true_type {
+         "CIDFontType2"
+     } else {
+@@ -760,7 +818,7 @@
+             font.base_name,
+             descriptor_obj,
+             font.widths_array(),
+-            if font.is_true_type { " /CIDToGIDMap /Identity" } else { "" }
++            cid_mapping
+         )
+         .into_bytes(),
+     );
+@@ -795,6 +853,14 @@
+     cmap_stream.extend_from_slice(&cmap);
+     cmap_stream.extend_from_slice(b"endstream");
+     objects.push(cmap_stream);
++    if let Some(mapping) = &font.cid_to_gid {
++        let mut stream = format!("<< /Length {} >>\nstream\n", mapping.len() * 2).into_bytes();
++        for gid in mapping {
++            stream.extend_from_slice(&gid.to_be_bytes());
++        }
++        stream.extend_from_slice(b"\nendstream");
++        objects.push(stream);
++    }
+     type0_obj
+ }
+
 diff --git c/crates/lo_core/src/style.rs w/crates/lo_core/src/style.rs
 index 1052da8..5f23f4d 100644
 --- c/crates/lo_core/src/style.rs
@@ -1958,12 +1995,19 @@ index 1052da8..5f23f4d 100644
 +        assert_eq!(super::odf_text(&node), "Before middle after  end\nnext");
 +    }
 +}
-diff --git c/crates/lo_core/src/unicode_font.rs w/crates/lo_core/src/unicode_font.rs
-index eb61576..9a24a36 100644
---- c/crates/lo_core/src/unicode_font.rs
-+++ w/crates/lo_core/src/unicode_font.rs
-@@ -80,7 +80,26 @@ impl EmbeddedUnicodeFont {
- 
+diff --git a/crates/lo_core/src/unicode_font.rs b/crates/lo_core/src/unicode_font.rs
+--- a/crates/lo_core/src/unicode_font.rs
++++ b/crates/lo_core/src/unicode_font.rs
+@@ -15,6 +15,7 @@
+     pub(crate) bytes: Vec<u8>,
+     pub(crate) is_true_type: bool,
+     pub(crate) widths: Vec<u16>,
++    pub(crate) cid_to_gid: Option<Vec<u16>>,
+     pub(crate) ascent: i16,
+     pub(crate) descent: i16,
+     pub(crate) bbox: (i16, i16, i16, i16),
+@@ -80,7 +81,26 @@
+
  pub(crate) fn build_unicode_fonts(chars: &BTreeSet<char>) -> Result<Vec<EmbeddedUnicodeFont>> {
      let mut database = Database::new();
 -    if let Some(paths) = std::env::var_os(FONT_OVERRIDE_ENV) {
@@ -1990,6 +2034,75 @@ index eb61576..9a24a36 100644
          for path in std::env::split_paths(&paths) {
              database.load_font_file(&path).map_err(|error| {
                  LoError::Io(format!(
+@@ -127,9 +147,26 @@
+                 .map(|ch| format!("U+{:04X}", *ch as u32))
+                 .collect::<Vec<_>>()
+                 .join(", ");
+-            return Err(LoError::Unsupported(format!(
+-                "no installed font can preserve Unicode PDF text; missing {sample}; install Noto Sans CJK and Noto Symbols or set {FONT_OVERRIDE_ENV}"
+-            )));
++            // Use an actual outlined square, not .notdef (which can be blank).
++            // Distinct CIDs preserve each missing character in ToUnicode even
++            // though every CID draws the same glyph.
++            let fallback = candidates.iter().find(|candidate| {
++                database.with_face_data(candidate.id, |data, index| {
++                    has_sfnt_table(data, b"glyf") && Face::parse(data, index)
++                        .ok().is_some_and(|face| face.glyph_index('□').is_some())
++                }).unwrap_or(false)
++            }).ok_or_else(|| LoError::Unsupported(
++                "no TrueType font with a missing-character square is available".into()
++            ))?;
++            let missing = remaining.iter().copied().collect::<Vec<_>>();
++            for chunk in missing.chunks(u16::MAX as usize) {
++                let font = database.with_face_data(fallback.id, |data, index| {
++                    build_tofu_font(data, index, &fallback.post_script_name, chunk)
++                }).ok_or_else(|| LoError::Io("reading tofu PDF font".into()))??;
++                fonts.push(font);
++            }
++            eprintln!("Preview font warning: rendering {} unsupported Unicode characters as boxes; missing {sample}", remaining.len());
++            break;
+         };
+         let font = database
+             .with_face_data(selected.id, |data, index| {
+@@ -208,6 +245,7 @@
+         bytes: subset,
+         is_true_type,
+         widths,
++        cid_to_gid: None,
+         ascent: scale_metric(face.ascender()),
+         descent: scale_metric(face.descender()),
+         bbox: (
+@@ -219,6 +257,30 @@
+         italic_angle: face.italic_angle(),
+         char_to_cid,
+     })
++}
++
++fn build_tofu_font(
++    data: &[u8],
++    face_index: u32,
++    post_script_name: &str,
++    chars: &[char],
++) -> Result<EmbeddedUnicodeFont> {
++    let mut font = build_from_face(data, face_index, post_script_name, &BTreeSet::from(['□']))?;
++    let square_gid = font.char_to_cid[&'□'];
++    let width = font.widths[square_gid as usize];
++    font.base_name = "LOTOFU+MissingGlyph".into();
++    font.char_to_cid.clear();
++    let mut mapping = vec![0];
++    font.widths = vec![0];
++    for (index, ch) in chars.iter().enumerate() {
++        let cid = u16::try_from(index + 1)
++            .map_err(|_| LoError::Unsupported("too many tofu characters in one font".into()))?;
++        font.char_to_cid.insert(*ch, cid);
++        font.widths.push(width);
++        mapping.push(square_gid);
++    }
++    font.cid_to_gid = Some(mapping);
++    Ok(font)
+ }
+
+ fn font_preference(face: &fontdb::FaceInfo) -> u8 {
 diff --git c/crates/lo_core/src/writer.rs w/crates/lo_core/src/writer.rs
 index f6b45d2..0d67e9a 100644
 --- c/crates/lo_core/src/writer.rs

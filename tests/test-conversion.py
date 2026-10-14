@@ -162,6 +162,50 @@ with tempfile.TemporaryDirectory(prefix='davros-preview-tests-') as tmp:
     assert 'NotoSans' in fonts, fonts
     print('PASS: bundled Unicode fonts override upstream font discovery')
 
+    # Private-use characters absent from our fonts: distinct BMP and astral
+    # characters must remain distinct when copied, including repeated glyphs.
+    missing = "\ue000\ue001\U000f0000\ue000"
+    label = f"Before {missing} after α ‣"
+    tofu_bodies = {
+        'odt': ('text', f'<office:text><text:p>{label}</text:p></office:text>'),
+        'ods': ('spreadsheet', '<office:spreadsheet><table:table table:name="Tofu">'
+                '<table:table-row><table:table-cell office:value-type="string">'
+                f'<text:p>{label}</text:p></table:table-cell></table:table-row>'
+                '</table:table></office:spreadsheet>'),
+        'odp': ('presentation', '<office:presentation><draw:page draw:name="Tofu">'
+                '<draw:frame svg:x="1cm" svg:y="1cm" svg:width="20cm" svg:height="3cm">'
+                f'<draw:text-box><text:p>{label}</text:p></draw:text-box>'
+                '</draw:frame></draw:page></office:presentation>'),
+    }
+    for ext, (kind, body) in tofu_bodies.items():
+        source = Path(tmp) / f'tofu.{ext}'
+        package_odf(source, kind, body)
+        scratch = Path(tmp) / f'tofu-{ext}-output'
+        scratch.mkdir()
+        pdf = scratch / 'preview.pdf'
+        result = subprocess.run([binary, source, pdf], env=env, capture_output=True,
+                                text=True, check=True, timeout=60)
+        assert 'rendering 3 unsupported Unicode characters as boxes' in result.stderr, result.stderr
+        text = subprocess.check_output(['pdftotext', '-raw', str(pdf), '-'], text=True)
+        assert label in text, (ext, text)
+        data = pdf.read_bytes()
+        assert b'LOTOFU+MissingGlyph' in data
+        # All three CIDs draw the same nonzero square glyph, while ToUnicode
+        # preserves the distinct original characters (including a surrogate pair).
+        mapping_ref = re.search(rb'/CIDToGIDMap (\d+) 0 R', data)
+        assert mapping_ref, ext
+        mapping = re.search(rb'\b' + mapping_ref[1] +
+                            rb' 0 obj\s*<< /Length 8 >>\s*stream\n(.{8})', data, re.S)
+        assert mapping and mapping[1][:2] == b'\x00\x00', ext
+        assert mapping[1][2:4] == mapping[1][4:6] == mapping[1][6:8] != b'\x00\x00'
+        for value in (b'<0001> <E000>', b'<0002> <E001>', b'<0003> <DB80DC00>'):
+            assert value in data, (ext, value)
+        subprocess.run(['pdftoppm', '-f', '1', '-singlefile', '-scale-to', '600',
+                        '-png', str(pdf), str(scratch / 'render')],
+                       check=True, capture_output=True, timeout=60)
+        assert (scratch / 'render.png').stat().st_size > 1000
+        print('PASS: visible tofu and preserved Unicode:', ext)
+
     for ext in ('doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'odt', 'ods', 'odp'):
         bad = Path(tmp) / f'malformed.{ext}'
         scratch = Path(tmp) / f'invalid-{ext}'

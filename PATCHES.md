@@ -518,3 +518,23 @@ retains its page counts and passes content checks. This is not pixel equivalence
 font substitution, exact wrapping/line breaking, and more complex ODF layouts
 remain approximate. See the corpus guide and local comparison report for the
 measured result and remaining differences.
+
+### Missing OpenDocument glyphs render as tofu
+
+`lo_core/src/unicode_font.rs` keeps normal font fallback for supported characters.
+When coverage is exhausted, it subsets a bundled TrueType font's U+25A1 outlined
+square and assigns a distinct CID to each unsupported character. The shared PDF
+writer in `lo_core/src/pdf_canvas.rs` emits an explicit CID-to-glyph map: all
+these CIDs draw the square, while ToUnicode retains each original codepoint,
+including supplementary-plane characters. This avoids both a document-wide
+conversion failure and loss of text identity when multiple characters share the
+same visual placeholder. CIDs are split across fonts if necessary to stay within
+the 16-bit PDF encoding limit. One bounded diagnostic reports the missing count
+and up to eight codepoints. A missing usable fallback font still returns an error;
+the production Liberation/Noto bundle provides the square.
+
+Packaged regressions cover ODT, ODS and ODP with repeated and distinct unsupported
+BMP/supplementary private-use characters mixed with supported text. They check
+successful conversion, warning output, exact text extraction, explicit glyph
+mapping, and successful Poppler rasterization. Microsoft Office renderers are
+unchanged.
