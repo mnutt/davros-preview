@@ -1,0 +1,205 @@
+{
+  "version": 1,
+  "sources": {
+    "libreoffice": {
+      "repository": "https://github.com/LibreOffice/core",
+      "revision": "1eddacafd9f49d0342f91a14dd966207f045b164",
+      "license_files": [
+        {
+          "path": "COPYING",
+          "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903"
+        },
+        {
+          "path": "COPYING.MPL",
+          "sha256": "1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5"
+        },
+        {
+          "path": "COPYING.LGPL",
+          "sha256": "a853c2ffec17057872340eee242ae4d96cbf2b520ae27d903e1b2fef1a5f9d1c"
+        }
+      ]
+    }
+  },
+  "fixtures": [
+    {
+      "id": "lo-native-feature_table_merged-cells-odt",
+      "source": "libreoffice",
+      "path": "sw/qa/extras/odfimport/data/feature_table_merged-cells.odt",
+      "file": "libreoffice/native-odf/feature_table_merged-cells.odt",
+      "size": 8343,
+      "sha256": "96b83adea89cb956caac47201c94d736508d9fd7958bfb943ca032f16d2c5c56",
+      "purpose": "feature table merged cells",
+      "expect": "render"
+    },
+    {
+      "id": "lo-native-feature_table_text-odt",
+      "source": "libreoffice",
+      "path": "sw/qa/extras/odfimport/data/feature_table_text.odt",
+      "file": "libreoffice/native-odf/feature_table_text.odt",
+      "size": 8588,
+      "sha256": "350c4fe5c76b70cdf15f26f8ef3525c22aac4d1aadf535b0f9a1fec7ddaca905",
+      "purpose": "feature table text",
+      "expect": "render"
+    },
+    {
+      "id": "lo-native-feature_text_bold-odt",
+      "source": "libreoffice",
+      "path": "sw/qa/extras/odfimport/data/feature_text_bold.odt",
+      "file": "libreoffice/native-odf/feature_text_bold.odt",
+      "size": 8425,
+      "sha256": "aea1b3f432c3470dd92975ee3225a5f685e08d783c018a56536f26ca02ce7ded",
+      "purpose": "feature text bold",
+      "expect": "render"
+    },
+    {
+      "id": "lo-native-feature_text_italic-odt",
+      "source": "libreoffice",
+      "path": "sw/qa/extras/odfimport/data/feature_text_italic.odt",
+      "file": "libreoffice/native-odf/feature_text_italic.odt",
+      "size": 8427,
+      "sha256": "0249044e5600b1de5eead7989fb5cb98a86321a3d1b948e3d8811db0942bb8c1",
+      "purpose": "feature text italic",
+      "expect": "render"
+    },
+    {
+      "id": "lo-native-feature_text_background-color-odt",
+      "source": "libreoffice",
+      "path": "sw/qa/extras/odfimport/data/feature_text_background-color.odt",
+      "file": "libreoffice/native-odf/feature_text_background-color.odt",
+      "size": 8341,
+      "sha256": "d4acfe26b02aad474929149a05d3cf97b77210b4e87f77c338e11854380a2067",
+      "purpose": "feature text background color",
+      "expect": "render"
+    },
+    {
+      "id": "lo-native-borders_ooo33-odt",
+      "source": "libreoffice",
+      "path": "sw/qa/extras/odfimport/data/borders_ooo33.odt",
+      "file": "libreoffice/native-odf/borders_ooo33.odt",
+      "size": 9890,
+      "sha256": "3473a4752c3e3492e63f43bf765b86b78c77d9e702906fe2c6f8e1bbf34b9e6b",
+      "purpose": "borders ooo33",
+      "expect": "render"
+    },
+    {
+      "id": "lo-native-custom_column_width-ods",
+      "source": "libreoffice",
+      "path": "sc/qa/unit/data/ods/custom_column_width.ods",
+      "file": "libreoffice/native-odf/custom_column_width.ods",
+      "size": 8804,
+      "sha256": "6799c79b016c566bea40bf18f33a5122fb7550b4cc286d64dbc17486b4832451",
+      "purpose": "custom column width",
+      "expect": "render"
+    },
+    {
+      "id": "lo-native-different-column-width-ods",
+      "source": "libreoffice",
+      "path": "sc/qa/unit/data/ods/different-column-width.ods",
+      "file": "libreoffice/native-odf/different-column-width.ods",
+      "size": 7295,
+      "sha256": "5c21fa8bd0b1e6be714e304ba5f3968fd9e8acbf1e8241bdd940fd057830a217",
+      "purpose": "different column width",
+      "expect": "render"
+    },
+    {
+      "id": "lo-native-merged-ods",
+      "source": "libreoffice",
+      "path": "sc/qa/unit/data/ods/merged.ods",
+      "file": "libreoffice/native-odf/merged.ods",
+      "size": 7723,
+      "sha256": "9ea4b0215ad4b4df5b4f295039ce5728e0b4b903ac6f58d9a9a748c1f568680d",
+      "purpose": "merged",
+      "expect": "render"
+    },
+    {
+      "id": "lo-native-multilineoptimal-ods",
+      "source": "libreoffice",
+      "path": "sc/qa/unit/data/ods/multilineoptimal.ods",
+      "file": "libreoffice/native-odf/multilineoptimal.ods",
+      "size": 8407,
+      "sha256": "16de37d17601f05e592376cb1e7dd41960b5d299ec79f797e35b7f6dafeb6c03",
+      "purpose": "multilineoptimal",
+      "expect": "render"
+    },
+    {
+      "id": "lo-native-formats-ods",
+      "source": "libreoffice",
+      "path": "sc/qa/unit/data/ods/formats.ods",
+      "file": "libreoffice/native-odf/formats.ods",
+      "size": 18545,
+      "sha256": "7bc8c21dac01ab99502e19403d8d70047cbf3ef128f9f2d21b0cd64409225634",
+      "purpose": "formats",
+      "expect": "render"
+    },
+    {
+      "id": "lo-native-hidden-empty-rows-ods",
+      "source": "libreoffice",
+      "path": "sc/qa/unit/data/ods/hidden-empty-rows.ods",
+      "file": "libreoffice/native-odf/hidden-empty-rows.ods",
+      "size": 8255,
+      "sha256": "ad7331366f56515c84a219a6cab692f32e6d29a42a06bac238966c08e66a08c9",
+      "purpose": "hidden empty rows",
+      "expect": "render"
+    },
+    {
+      "id": "lo-native-group_rotation-odp",
+      "source": "libreoffice",
+      "path": "sd/qa/unit/data/odp/group_rotation.odp",
+      "file": "libreoffice/native-odf/group_rotation.odp",
+      "size": 10429,
+      "sha256": "15f00cff8c5326f3b58932bb38217bcf350a3d4c1f45e09098b1a8d16dc92eb7",
+      "purpose": "group rotation",
+      "expect": "render"
+    },
+    {
+      "id": "lo-native-image_transparency-odp",
+      "source": "libreoffice",
+      "path": "sd/qa/unit/data/odp/image_transparency.odp",
+      "file": "libreoffice/native-odf/image_transparency.odp",
+      "size": 24448,
+      "sha256": "e414ee8c52f0176277500ac9b3598ffc12913c58ac4948e0347859e77b1314b6",
+      "purpose": "image transparency",
+      "expect": "render"
+    },
+    {
+      "id": "lo-native-masterpage_style_parent-odp",
+      "source": "libreoffice",
+      "path": "sd/qa/unit/data/odp/masterpage_style_parent.odp",
+      "file": "libreoffice/native-odf/masterpage_style_parent.odp",
+      "size": 17790,
+      "sha256": "ef36a19185beb776c54d367758ebe8b7d815b5c7bd39ed869473e45255d50e60",
+      "purpose": "masterpage style parent",
+      "expect": "render"
+    },
+    {
+      "id": "lo-native-shapes-test-odp",
+      "source": "libreoffice",
+      "path": "sd/qa/unit/data/odp/shapes-test.odp",
+      "file": "libreoffice/native-odf/shapes-test.odp",
+      "size": 61333,
+      "sha256": "643b9011d19caa28e03ce127fc12039bd77bc034770770922d52225b0f45ec70",
+      "purpose": "shapes test",
+      "expect": "render"
+    },
+    {
+      "id": "lo-native-slide-custom-background-odp",
+      "source": "libreoffice",
+      "path": "sd/qa/unit/data/odp/slide-custom-background.odp",
+      "file": "libreoffice/native-odf/slide-custom-background.odp",
+      "size": 40023,
+      "sha256": "14966ebca057bf8a68474ce0236198b4679ab31b26a7445a05c3cddb5bffae3b",
+      "purpose": "slide custom background",
+      "expect": "render"
+    },
+    {
+      "id": "lo-native-numfmt-odp",
+      "source": "libreoffice",
+      "path": "sd/qa/unit/data/odp/numfmt.odp",
+      "file": "libreoffice/native-odf/numfmt.odp",
+      "size": 11438,
+      "sha256": "099163bc086c109d74d0b44b35a1be3c273ae33139166ede232a4ce325a6ff4f",
+      "purpose": "numfmt",
+      "expect": "render"
+    }
+  ]
+}

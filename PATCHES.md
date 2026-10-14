@@ -45,6 +45,14 @@ can change line wrapping and pagination; it is not exact font reproduction.
 Validation: packaged conversion smoke tests and visual inspection of corpus
 PDFs. There is no dedicated assertion for every alias.
 
+### D3. Return rendered PDF bytes to the caller
+
+`src/lib.rs` adds `render_docx_to_pdf`, using the existing parser and renderer.
+The CLI can now enforce its output limit and publish through the same exclusive
+staging-file path as other formats. Existing upstream file-writing APIs remain
+available. Validate packaged DOC/DOCX output and unavailable-Landlock symlink
+refusal (`test-sandbox.py`).
+
 ## office2pdf 0.8.1
 
 Patch: [office2pdf-0.8.1.patch](patches/office2pdf-0.8.1.patch).
@@ -338,3 +346,90 @@ The CLI dispatch, sandbox/resource limits, intermediate-file cleanup and corpus
 harness are repository code, not additional dependency patches. See
 [src/main.rs](src/main.rs), [src/legacy.rs](src/legacy.rs),
 [src/lib.rs](src/lib.rs) and [tests/corpus/README.md](tests/corpus/README.md).
+
+
+## libreoffice-rs ODF renderer
+
+The production ODT/ODS/ODP backend uses the cumulative
+[fidelity patch](patches/libreoffice-rs-291b94a.patch), which targets
+revision `291b94ae0083ccb2e5f2cf49b46626e41eedf53d`. Its logical-change inventory,
+upstream file mapping, reproduction steps, validation and limitations are in the
+[ODF evaluation notes](tests/corpus/README.md#changes-in-fidelitypatch), including
+the later native-corpus rounds. Do not infer compatibility with a newer revision
+from patch application alone; rerun the native ODF and original control corpus.
+
+Production integration adds bundled Unicode font discovery through
+`DAVROS_PREVIEW_FONTS` (`lo_core/src/unicode_font.rs`). It takes precedence over
+upstream font overrides and avoids system-font discovery inside the sandbox.
+Presentation master fields (`lo_impress/src/import.rs`) resolve enabled footer,
+header, slide-number, slide-count and slide-name fields per slide, retaining saved
+date/time values. The importer regression covers visible and hidden master fields
+across multiple slides. Complex enhanced geometry and mixed-run typography remain
+open fidelity work.
+
+`sources.json` pins the source archive checksum; `prepare.py` stages extraction
+and patch application before replacing the vendor tree. The old evaluation patch
+path is a symlink to this canonical production patch. `test.sh` runs the ODF library
+tests and generated ODF controls through the packaged binary, alongside all
+existing Office and sandbox checks. Runtime dependency notices include inherited
+workspace metadata and the upstream MIT license.
+
+### Enhanced geometry and presentation typography
+
+- `lo_impress/src/odf_shapes.rs` interprets ODF enhanced paths instead of replacing
+  custom shapes with rectangles. It handles move/line/cubic/quadratic segments,
+  close/end/fill/stroke controls, elliptical quadrants and arcs; evaluates bounded
+  modifier/equation references and arithmetic/trigonometric expressions; and
+  preserves mirrors and compound holes. Ordinary paths, polygons and polylines
+  use the same SVG route. Generated artwork passes through the existing bounded,
+  self-contained SVG rasterizer; shape text stays selectable. Geometry tests cover
+  equations, cycles, malformed/excessive input, real triangle/ellipse paths, a
+  transparent ring hole and visible hairlines. Extrusion and unsupported transforms
+  retain the previous fallback. Gradients, 3D lighting and per-face shading are
+  not implemented; subpixel strokes have a minimum preview width of 0.5 pt.
+- `lo_core/src/style.rs` adds explicit named-style inheritance so a nested span's
+  default family style cannot reset an inherited frame/paragraph property.
+  `lo_impress/src/import.rs` uses it for text color, family, size, bold/italic and
+  alignment, and imports source padding and vertical text alignment. The
+  regression combines a white parent style, a black family default, a styled
+  child span, a serif family and centered vertical alignment.
+- `lo_impress/src/pdf.rs` uses the selected base font's widths for wrapping and
+  horizontal alignment and places text blocks according to vertical alignment.
+  `lo_core/src/font_metrics.rs` reuses upstream Writer's Times metrics alongside
+  Helvetica and fixed-width Courier metrics. `lo_core/src/pdf_canvas.rs` adds
+  Helvetica-BoldOblique, with its PDF resource and Unicode style flags;
+  `lo_writer/src/font_metrics.rs` handles this additional font variant. Existing
+  Writer font selection is unchanged. Mixed styling within a text box, automatic
+  contrast colors, kerning and arbitrary font families remain incomplete.
+
+The packaged regression generates an ODP with enhanced ring geometry and bold
+italic text, checks that artwork is emitted, and verifies selectable text uses
+its actual bold-italic PDF font resource. The downloaded eight-page shape corpus
+and presentation controls provide the visual comparison; successful path parsing
+alone is not a visual correctness test.
+
+### ODF security: XML cloning and repeated spreadsheet cells
+
+`crates/lo_core/src/xml_parser.rs` shares subtrees with `Arc` between `children`
+and ordered `items`. Upstream cloned both recursively, making allocation grow
+exponentially with nesting. Both views retain the same node identity; accessors
+still return `&XmlNode`. A depth limit of 64 and a conservative 128 MiB structural
+budget bound recursive traversal and construction, including CDATA and implicitly
+closed input. This budget is not an exact allocator/RSS measurement.
+
+`crates/lo_impress/src/import.rs` resolves presentation fields once per subtree
+using copy-on-write, then reconnects the ordered view to the updated children;
+traversing both views recursively would reintroduce exponential work.
+`crates/lo_math/src/import.rs` adapts its fallback node to shared ownership.
+When upgrading, preserve sharing, bounded construction and tests for node
+identity, excessive nesting, and presentation field resolution.
+
+`crates/lo_calc/src/import.rs` rejects more than 100,000 expanded populated cells
+per sheet before materializing repeated rows. Per-axis bounds alone allow their
+product to exhaust memory. Errors propagate through `from_ods_bytes`; the limit
+can reject unusually large legitimate sheets. Regression tests cover a tiny
+package describing a million rows with 16,384 populated columns.
+
+Validation: `cargo test -p lo_core -p lo_calc --lib`, packaged ODF conversions,
+and the existing ODF corpus. These limits do not cover every decoder, layout
+algorithm, or the total cell count across multiple sheets.

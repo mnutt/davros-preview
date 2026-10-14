@@ -14,5 +14,11 @@
   {
     "name": "office_oxide-0.1.13",
     "sha256": "22582556784e5c9005e12e2c2e78c2959674ca082edf806d939fff4ffceca9de"
+  },
+  {
+    "name": "libreoffice-rs-291b94a",
+    "url": "https://codeload.github.com/clark-labs-inc/libreoffice-rs/tar.gz/291b94ae0083ccb2e5f2cf49b46626e41eedf53d",
+    "archive_root": "libreoffice-rs-291b94ae0083ccb2e5f2cf49b46626e41eedf53d",
+    "sha256": "6a0f9e3334cf2908f9d483f2d69954a6de25e10c83adb2bb7f5cc907345f0c28"
   }
 ]

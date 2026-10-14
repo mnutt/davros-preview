@@ -26,9 +26,11 @@ pub fn prepare(input: &Path, output: &Path) -> Result<PreparedInput, Box<dyn Err
         .to_ascii_lowercase();
     if !matches!(
         extension.as_str(),
-        "doc" | "docx" | "xls" | "xlsx" | "ppt" | "pptx"
+        "doc" | "docx" | "xls" | "xlsx" | "ppt" | "pptx" | "odt" | "ods" | "odp"
     ) {
-        return Err("Supported input formats: doc, docx, xls, xlsx, ppt, pptx".into());
+        return Err(
+            "Supported input formats: doc, docx, xls, xlsx, ppt, pptx, odt, ods, odp".into(),
+        );
     }
     let formats = match extension.as_str() {
         "doc" => Some((DocumentFormat::Doc, DocumentFormat::Docx)),

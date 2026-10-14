@@ -194,3 +194,69 @@ the previous ISO-text fallback to avoid changing their dates or exposing raw
 serials. Source chart, slide, and image placement is not recovered by these fixes.
 
 Evaluated runtime SHA-256: `4f2e232c8e5fac151bf15cfcabe9f00d0421bd7110d2ba3141393a9a16438075`.
+
+
+## ODF preview evaluation
+
+The production converter supports ODT, ODS and ODP through the pinned, patched
+`libreoffice-rs` backend. Office formats retain their existing converters.
+Upstream revisions and checksums are in `sources.json`; the maintained patch is
+`patches/libreoffice-rs-291b94a.patch`. See [PATCHES.md](../../PATCHES.md) for its
+logical changes and limitations, and [SECURITY.md](../../SECURITY.md) for security
+limits and validation.
+
+`odf/` contains the maintained comparison runner, synthetic fixture generator,
+pinned native corpus manifest, and compact report exporter. The native manifest
+adds 18 LibreOffice QA documents. Together with directly authored controls and
+LibreOffice exports of Office fixtures, the evaluation covers 30 documents.
+Downloaded inputs and generated reports remain ignored; upstream licenses are
+retained under `licenses/` and included in report exports.
+
+### Reproduce the evaluation
+
+Use the reference-engine dependencies described above, then:
+
+```sh
+./build.sh
+./test.sh
+cargo build --release --locked --example corpus-normalize -j1
+python3 tests/corpus/run.py fetch
+python3 tests/corpus/run.py --manifest tests/corpus/odf/native-corpus.json fetch
+python3 tests/corpus/odf/evaluate.py \
+  --candidate output/native-preview/davros-preview --odf-only \
+  --native-corpus tests/corpus/odf/native-corpus.json \
+  --preview-pages 12 --output tmp/odf-evaluation
+```
+
+The evaluator automatically exports `tmp/odf-evaluation-share.tar.gz`. Copy that
+single archive: it includes the report, inputs, PDFs, preview images and licenses,
+without reference-engine profiles, caches, or working directories. To export an
+existing result directory:
+
+```sh
+python3 tests/corpus/odf/share.py tmp/odf-evaluation tmp/odf-share
+```
+
+### Current coverage and limitations
+
+All 30 cases converted with matching reference page counts and passing content
+checks at the shapes/typography checkpoint. After security hardening, all 30
+retained their previous candidate page counts and exact extracted text. The
+security check was not a new pixel-difference evaluation.
+
+Supported improvements include spreadsheet column widths, merges, formatting,
+pagination, cached chart values, images, presentation fields, style inheritance,
+bounded enhanced geometry, and selectable presentation text. See the patch
+inventory for precise scope; these are previews, not complete Office-suite
+renderers.
+
+The eight-page shape control's mean foreground pixel mismatch improved from
+59.77% to 38.78%; its first four pages improved from 56.43% to 14.26%. Pages 5–7
+still expose unsupported 3D projection, lighting and advanced effects. Automatic
+contrast colors, mixed text styles, highlighting, kerning, and arbitrary font
+families remain incomplete. Dynamic date/time fixtures compare saved candidate
+text against a refreshed reference time and remain visible in reports.
+
+The local visual checkpoint is `tmp/odf-round29`; its compact export is
+`tmp/odf-report-shapes-typography.tar.gz`. These are ignored local artifacts,
+not files supplied by a checkout. Regenerate reports with the commands above.

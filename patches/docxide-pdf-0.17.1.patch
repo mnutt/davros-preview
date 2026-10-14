@@ -23,3 +23,11 @@
      if let Some((path, face_index)) = index.get(&(key.clone(), bold, italic)) {
          return Some((path.clone(), *face_index, true));
      }
+--- a/src/lib.rs
++++ b/src/lib.rs
+@@ -22,0 +23,5 @@
++/// Render without writing, so callers can enforce output limits and publish safely.
++pub fn render_docx_to_pdf(input: impl AsRef<Path>) -> Result<Vec<u8>, Error> {
++    pdf::render(&docx::parse(input.as_ref())?)
++}
++

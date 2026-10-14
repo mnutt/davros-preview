@@ -1,30 +1,14 @@
 #[cfg(target_os = "linux")]
 pub mod sandbox;
 #[cfg(not(target_os = "linux"))]
-compile_error!("Native document previews require Linux Landlock");
+compile_error!("Native document previews require Linux");
 
 pub mod legacy;
 
 use std::{fs::File, io::Read, path::Path};
 
-/// Set process limits and bound input size before any document parsing.
+/// Bound input size before parsing. Process hardening is applied by sandbox::enter.
 fn bounded_input(input: &Path) -> Result<File, Box<dyn std::error::Error>> {
-    #[cfg(target_os = "linux")]
-    unsafe {
-        for (resource, bytes) in [
-            (libc::RLIMIT_AS, 4_u64 * 1024 * 1024 * 1024),
-            (libc::RLIMIT_FSIZE, 128_u64 * 1024 * 1024),
-            (libc::RLIMIT_CORE, 0),
-        ] {
-            let limit = libc::rlimit {
-                rlim_cur: bytes,
-                rlim_max: bytes,
-            };
-            if libc::setrlimit(resource, &limit) != 0 {
-                return Err(std::io::Error::last_os_error().into());
-            }
-        }
-    }
     let file = File::open(input)?;
     if file.metadata()?.len() > 32 * 1024 * 1024 {
         return Err("Document exceeds 32 MiB".into());
@@ -51,4 +35,46 @@ pub fn validate(input: &Path) -> Result<(), Box<dyn std::error::Error>> {
         }
     }
     Ok(())
+}
+
+/// Publish only a complete, bounded PDF; never follow or overwrite an existing
+/// output symlink/hardlink. The caller owns the private scratch directory.
+pub fn write_pdf(output: &Path, bytes: &[u8]) -> Result<(), Box<dyn std::error::Error>> {
+    use std::io::Write;
+    if bytes.len() > 128 * 1024 * 1024 {
+        return Err("PDF exceeds 128 MiB".into());
+    }
+    if !bytes.starts_with(b"%PDF-") {
+        return Err("Converter did not produce a PDF".into());
+    }
+    let mut staged =
+        tempfile::NamedTempFile::new_in(output.parent().ok_or("Missing output directory")?)?;
+    staged.write_all(bytes)?;
+    staged.persist_noclobber(output)?;
+    Ok(())
+}
+
+#[cfg(test)]
+mod security_tests {
+    use super::*;
+    #[test]
+    fn output_is_bounded_and_does_not_overwrite_links() {
+        let work = tempfile::tempdir().unwrap();
+        let secret = work.path().join("secret");
+        let output = work.path().join("preview.pdf");
+        std::fs::write(&secret, b"secret").unwrap();
+        std::os::unix::fs::symlink(&secret, &output).unwrap();
+        assert!(write_pdf(&output, b"%PDF-test").is_err());
+        assert_eq!(std::fs::read(&secret).unwrap(), b"secret");
+        std::fs::remove_file(&output).unwrap();
+        std::fs::hard_link(&secret, &output).unwrap();
+        assert!(write_pdf(&output, b"%PDF-test").is_err());
+        assert_eq!(std::fs::read(&secret).unwrap(), b"secret");
+        std::fs::remove_file(&output).unwrap();
+        assert!(write_pdf(&output, b"invalid").is_err());
+        assert!(write_pdf(&output, &vec![0; 128 * 1024 * 1024 + 1]).is_err());
+        assert!(!output.exists());
+        write_pdf(&output, b"%PDF-test").unwrap();
+        assert_eq!(std::fs::read(&output).unwrap(), b"%PDF-test");
+    }
 }

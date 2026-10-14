@@ -4,7 +4,9 @@ import os
 from pathlib import Path
 import re
 import subprocess
+import sys
 import tempfile
+import zipfile
 
 root = Path(__file__).resolve().parent.parent
 bundle = root / 'output/native-preview'
@@ -12,6 +14,9 @@ binary = bundle / 'davros-preview'
 env = dict(os.environ, DAVROS_PREVIEW_FONTS=str(bundle / 'fonts'),
            FONTCONFIG_FILE=str(bundle / 'fonts.conf'), RAYON_NUM_THREADS='2')
 texts = {}
+sys.path.insert(0, str(root / 'tests/corpus/odf'))
+from native_fixtures import build as build_odf, package as package_odf
+
 with tempfile.TemporaryDirectory(prefix='davros-preview-tests-') as tmp:
     for source in sorted((root / 'tests/fixtures').iterdir()):
         scratch = Path(tmp) / source.name
@@ -46,7 +51,59 @@ with tempfile.TemporaryDirectory(prefix='davros-preview-tests-') as tmp:
         print('PASS:', source.name)
     for prefix in ['x', 'spreadsheet']:
         assert texts[f'prefixed-{prefix}.xlsx'] == texts['basic.xlsx']
-    for ext in ('doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'):
+    odf_sources = build_odf(Path(tmp) / 'odf-inputs')
+    for source in odf_sources:
+        for uppercase in (False, True):
+            original = source
+            if uppercase:
+                source = original.with_suffix(original.suffix.upper())
+                source.write_bytes(original.read_bytes())
+            scratch = Path(tmp) / source.name
+            scratch.mkdir()
+            pdf = scratch / 'preview.pdf'
+            subprocess.run([binary, source, pdf], env=env, check=True, timeout=60)
+            text = subprocess.check_output(['pdftotext', str(pdf), '-'], text=True)
+            assert f'Native {source.suffix[1:].upper()} control' in text, text
+            if source.suffix.lower() == '.odt':
+                assert 'First page header' in text and 'Later page header' in text
+                assert 'Page 1 of 2' in text and 'Page 2 of 2' in text
+            elif source.suffix.lower() == '.ods':
+                assert '12.5%' in text and '-$12.50' in text and '29-Feb-2024' in text
+                assert 'Hidden sentinel' not in text
+            else:
+                assert 'Before middle after' in text and 'Nested item' in text
+            assert sorted(p.name for p in scratch.iterdir()) == ['preview.pdf']
+            print('PASS:', source.name)
+
+    # Native enhanced geometry must survive the production SVG feature/dispatch.
+    shapes_source = Path(tmp) / 'shapes.odp'
+    package_odf(shapes_source, 'presentation', '<office:presentation><draw:page draw:name="Shapes"><draw:custom-shape svg:x="1in" svg:y="1in" svg:width="1in" svg:height="1in"><draw:enhanced-geometry draw:enhanced-path="U 10800 10800 10800 10800 0 360 Z U 10800 10800 5400 5400 0 360 Z N"/></draw:custom-shape><draw:frame svg:x="1in" svg:y="3in" svg:width="5in" svg:height="1in"><draw:text-box><text:p text:style-name="Both">Bold italic selectable text</text:p></draw:text-box></draw:frame></draw:page></office:presentation>',
+                automatic='<style:style style:name="Both" style:family="paragraph"><style:text-properties fo:font-family="Liberation Sans" fo:font-weight="bold" fo:font-style="italic"/></style:style>')
+    scratch = Path(tmp) / 'shapes-output'
+    scratch.mkdir()
+    pdf = scratch / 'preview.pdf'
+    subprocess.run([binary, shapes_source, pdf], env=env, check=True, timeout=60)
+    text = subprocess.check_output(['pdftotext', str(pdf), '-'], text=True)
+    assert 'Bold italic selectable text' in text
+    assert re.search(rb'/F8 [0-9.]+ Tf', pdf.read_bytes())
+    assert b'Helvetica-BoldOblique' in pdf.read_bytes()
+    images = subprocess.check_output(['pdfimages', '-list', str(pdf)], text=True)
+    assert any('image' in line.split() for line in images.splitlines()[2:]), images
+    print('PASS: enhanced ODF geometry and selectable bold italic text')
+
+    # Exercise embedded Unicode fonts inside Landlock, not just PDF base fonts.
+    unicode_source = Path(tmp) / 'unicode.odt'
+    package_odf(unicode_source, 'text', '<office:text><text:p>Greek αβγ Cyrillic Привет</text:p></office:text>')
+    scratch = Path(tmp) / 'unicode-output'
+    scratch.mkdir()
+    pdf = scratch / 'preview.pdf'
+    unicode_env = dict(env, LIBREOFFICE_PURE_UNICODE_FONT='/nonexistent/font.ttf')
+    subprocess.run([binary, unicode_source, pdf], env=unicode_env, check=True, timeout=60)
+    text = subprocess.check_output(['pdftotext', str(pdf), '-'], text=True)
+    assert 'αβγ' in text and 'Привет' in text, text
+    print('PASS: bundled Unicode fonts override upstream font discovery')
+
+    for ext in ('doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'odt', 'ods', 'odp'):
         bad = Path(tmp) / f'malformed.{ext}'
         scratch = Path(tmp) / f'invalid-{ext}'
         scratch.mkdir()
@@ -58,7 +115,8 @@ with tempfile.TemporaryDirectory(prefix='davros-preview-tests-') as tmp:
                 with bad.open('wb') as f:
                     f.truncate(32 * 1024 * 1024 + 1)
             elif kind == 'renamed-zip':
-                bad.write_bytes((root / 'tests/fixtures' / f'basic.{ext}x').read_bytes())
+                fixture = f'basic.{ext}x' if ext in ('doc', 'xls', 'ppt') else 'basic.docx'
+                bad.write_bytes((root / 'tests/fixtures' / fixture).read_bytes())
             else:
                 bad.write_bytes(b'not an Office document')
             failure = subprocess.run([binary, bad, output], env=env,
@@ -68,6 +126,35 @@ with tempfile.TemporaryDirectory(prefix='davros-preview-tests-') as tmp:
             if kind == 'oversized':
                 assert b'Document exceeds 32 MiB' in failure.stderr, failure.stderr
             print(f'PASS: {kind} {ext} rejected without a PDF')
+
+    # ODF packages use the same decompression preflight as OOXML.
+    for ext in ('odt', 'ods', 'odp'):
+        source = Path(tmp) / f'expanded.{ext}'
+        with zipfile.ZipFile(source, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
+            archive.writestr('content.xml', b' ' * (32 * 1024 * 1024 + 1))
+        scratch = Path(tmp) / f'expanded-{ext}'
+        scratch.mkdir()
+        pdf = scratch / 'preview.pdf'
+        failure = subprocess.run([binary, source, pdf], env=env, capture_output=True, timeout=60)
+        assert failure.returncode and b'Archive entry exceeds' in failure.stderr
+        assert not pdf.exists()
+        print(f'PASS: oversized decompression {ext}')
+
+    # Tiny documents must not expand into enormous trees or repeated sheets.
+    bombs = [
+        ('nested', 'odt', 'text', '<office:text>' + '<text:span>' * 80 + 'x' + '</text:span>' * 80 + '</office:text>', b'XML expansion'),
+        ('repeated', 'ods', 'spreadsheet', '<office:spreadsheet><table:table><table:table-row table:number-rows-repeated="1000000"><table:table-cell table:number-columns-repeated="16384" office:value-type="float" office:value="1"/></table:table-row></table:table></office:spreadsheet>', b'expanded cells'),
+    ]
+    for name, ext, family, body, diagnostic in bombs:
+        source = Path(tmp) / f'bomb-{name}.{ext}'
+        package_odf(source, family, body)
+        scratch = Path(tmp) / f'bomb-{name}'
+        scratch.mkdir()
+        pdf = scratch / 'preview.pdf'
+        failure = subprocess.run([binary, source, pdf], env=env, capture_output=True, timeout=10)
+        assert failure.returncode and diagnostic in failure.stderr, (name, failure.stderr)
+        assert not pdf.exists()
+        print(f'PASS: {name} expansion rejected before rendering')
 
     # Extension handling must be case-insensitive for documents uploaded from Windows.
     for ext in ('DOC', 'DOCX', 'XLS', 'XLSX', 'PPT', 'PPTX'):

@@ -22,6 +22,17 @@ their bodies and write automatic note-body marks in DOCX; classify DOC comments
 correctly; avoid inferred headings for structured DOC paragraphs; preserve natural
 PNG proportions for fallback legacy images; and avoid invented PPT slide titles.
 
+libreoffice-rs: MIT (locally modified)
+https://github.com/clark-labs-inc/libreoffice-rs
+Pinned revision: 291b94ae0083ccb2e5f2cf49b46626e41eedf53d
+Used for ODT, ODS and ODP previews only. Changes preserve ODF styles, page
+geometry, tables, cached cell formats, headers/footers, images and transparency,
+charts, master artwork, lists and simple transforms; add bounded SVG rendering;
+use the bundled font directory for Unicode PDF text; interpret bounded enhanced
+shape geometry; and improve presentation text inheritance, font metrics and
+alignment. PATCHES.md and the
+corpus guide describe the logical changes, regression coverage and limitations.
+
 Liberation Fonts: SIL Open Font License 1.1
 https://github.com/liberationfonts/liberation-fonts
 

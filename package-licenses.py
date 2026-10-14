@@ -15,13 +15,23 @@ notices = []
 licenses = {}
 for package in tomllib.loads((root / 'Cargo.lock').read_text())['package']:
     name = f"{package['name']}-{package['version']}"
-    sources = [root / 'vendor' / name, *(cargo / 'registry/src').glob('*/' + name)]
+    odf_workspace = root / 'vendor/libreoffice-rs-291b94a'
+    sources = [root / 'vendor' / name,
+               odf_workspace / 'crates' / package['name'],
+               *(cargo / 'registry/src').glob('*/' + name)]
     source = next((p for p in sources if p.exists()), None)
     if source is None:
         continue  # Cargo.lock also includes dependencies for other platforms.
     manifest = tomllib.loads((source / 'Cargo.toml').read_text())['package']
+    license_dirs = [source]
+    if source.parent == odf_workspace / 'crates':
+        inherited = tomllib.loads((odf_workspace / 'Cargo.toml').read_text())['workspace']['package']
+        for key in ('license', 'repository'):
+            if isinstance(manifest.get(key), dict) and manifest[key].get('workspace'):
+                manifest[key] = inherited[key]
+        license_dirs.append(odf_workspace)
     notices.append(f"{name}: {manifest.get('license', 'see license file')} {manifest.get('repository', '')}")
-    for file in source.iterdir():
+    for file in (file for directory in license_dirs for file in directory.iterdir()):
         if file.is_file() and file.name.upper().startswith(('LICENSE', 'COPYING', 'NOTICE')):
             content = file.read_text(errors='replace').strip()
             licenses.setdefault(content, []).append(f'{name}/{file.name}')

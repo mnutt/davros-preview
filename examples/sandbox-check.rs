@@ -18,8 +18,42 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let input = Path::new(&args[1]);
     let output = Path::new(&args[2]);
     let root = input.parent().unwrap();
-    let abi = unsafe { libc::syscall(libc::SYS_landlock_create_ruleset, 0usize, 0usize, 1u32) };
-    davros_preview::sandbox::enter(input, output)?;
+    let report = davros_preview::sandbox::enter(input, output)?;
+    if args.get(5).is_some_and(|arg| arg == "probe") {
+        let features: serde_json::Map<String, serde_json::Value> = report
+            .features
+            .iter()
+            .map(|(name, enabled, detail)| {
+                (
+                    (*name).into(),
+                    serde_json::json!({"enabled": enabled, "detail": detail}),
+                )
+            })
+            .collect();
+        if report.features.iter().any(|(name, enabled, detail)| {
+            *name == "inherited_fds_closed"
+                && (*enabled || detail.contains("attempted individual closes"))
+        }) {
+            assert_eq!(unsafe { libc::fcntl(198, libc::F_GETFD) }, -1);
+            assert_eq!(io::Error::last_os_error().raw_os_error(), Some(libc::EBADF));
+        }
+        println!(
+            "{}",
+            serde_json::json!({"landlock_abi": report.landlock_abi, "features": features})
+        );
+        return Ok(());
+    }
+    let active = |feature| {
+        report
+            .features
+            .iter()
+            .any(|(name, enabled, _)| *name == feature && *enabled)
+    };
+    let abi = report.landlock_abi.unwrap_or(0);
+    if !active("filesystem_isolation") {
+        println!("SKIP: filesystem enforcement unavailable; fault-injection checks still run");
+        return Ok(());
+    }
     assert_eq!(fs::read(input)?, b"input");
     assert!(!fs::read(std::env::var_os("FONTCONFIG_FILE").unwrap())?.is_empty());
     assert!(
@@ -48,17 +82,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // The driver deliberately passes an open secret file, with CLOEXEC cleared.
     assert_eq!(unsafe { libc::fcntl(198, libc::F_GETFD) }, -1);
     assert_eq!(io::Error::last_os_error().raw_os_error(), Some(libc::EBADF));
-    if abi >= 4 {
+    if active("tcp_isolation") {
         denied(TcpStream::connect(&args[3]));
     }
-    if abi >= 6 {
+    if active("signal_isolation") {
         assert_eq!(unsafe { libc::kill(libc::getppid(), 0) }, -1);
         assert_eq!(io::Error::last_os_error().raw_os_error(), Some(libc::EPERM));
+    }
+    if active("abstract_unix_socket_isolation") {
         use std::os::linux::net::SocketAddrExt;
         let addr = std::os::unix::net::SocketAddr::from_abstract_name(args[4].as_bytes())?;
         denied(UnixStream::connect_addr(&addr));
     }
-    if abi >= 9 {
+    if active("pathname_unix_socket_isolation") {
         denied(UnixStream::connect(root.join("listener.sock")));
     }
     let secret = root.join("secret");

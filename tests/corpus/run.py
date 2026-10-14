@@ -272,7 +272,7 @@ def evaluate(args, manifest):
     env = dict(os.environ, DAVROS_PREVIEW_FONTS=str(bundle / 'fonts'),
                FONTCONFIG_FILE=str(bundle / 'fonts.conf'), RAYON_NUM_THREADS='2')
     results = {'created_utc': datetime.now(timezone.utc).isoformat(),
-               'manifest_sha256': digest(HERE / 'manifest.json'), 'sources': manifest['sources'],
+               'manifest_sha256': digest(args.manifest), 'sources': manifest['sources'],
                'binary_sha256': digest(binary), 'normalizer_sha256': digest(args.normalizer),
                'cargo_lock_sha256': digest(ROOT / 'Cargo.lock'),
                'runner_sha256': digest(Path(__file__)), 'python_version': platform.python_version(),
@@ -347,6 +347,7 @@ def evaluate(args, manifest):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--manifest', type=Path, default=HERE / 'manifest.json')
     sub = parser.add_subparsers(dest='command', required=True)
     sub.add_parser('fetch')
     ev = sub.add_parser('evaluate')
@@ -358,7 +359,7 @@ def main():
     ev.add_argument('--preview-pages', type=int, default=2)
     ev.add_argument('--ids', nargs='+')
     args = parser.parse_args()
-    manifest = json.loads((HERE / 'manifest.json').read_text())
+    manifest = json.loads(args.manifest.read_text())
     validate_manifest(manifest)
     if args.command == 'fetch':
         fetch(manifest)

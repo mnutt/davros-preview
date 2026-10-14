@@ -1,6 +1,6 @@
 # davros-preview
 
-A small, sandboxed Office-to-PDF converter used by Davros. The Rust build,
+A sandboxed document-to-PDF converter used by Davros. The Rust build,
 upstream patches, fonts, and converter regression tests live here; Davros owns
 HTTP requests, permissions, job scheduling, cancellation, caching, and the UI.
 
@@ -10,9 +10,11 @@ The `davros-preview` executable supports these formats:
 | --- | --- |
 | DOC, DOCX | Office Oxide 0.1.13 (DOC → DOCX), docxide-pdf 0.17.1 |
 | XLS, XLSX, PPT, PPTX | Office Oxide 0.1.13 (XLS → XLSX, PPT → PPTX), office2pdf 0.8.1 |
+| ODT, ODS, ODP | Patched libreoffice-rs, revision `291b94a` |
 
-PDF text remains selectable. Spreadsheet pages widen to fit all columns at their
-natural size, while still paginating vertically. Only Liberation Sans, Serif,
+PDF text remains selectable. Microsoft spreadsheet pages widen to fit all columns at their
+natural size, while still paginating vertically. ODS uses source page geometry and
+paginates horizontally and vertically. Only Liberation Sans, Serif,
 and Mono (regular, bold, italic, bold italic) are bundled. Font substitution can
 change wrapping and pagination; scripts outside this font set are not supported.
 
@@ -31,14 +33,14 @@ sudo apt-get install build-essential python3 patch fonts-liberation poppler-util
 
 The default is one Cargo job to accommodate small build VMs. Set
 `CARGO_BUILD_JOBS` and `CARGO_TARGET_DIR` to override. `prepare.py` validates
-upstream crate checksums before extracting and applying `patches/`; Cargo uses
+upstream archive checksums before extracting and applying `patches/`; Cargo uses
 the checked-in lockfile. Dependencies are downloaded on the first build.
 
 [PATCHES.md](PATCHES.md) describes each logical dependency change, its regression
 coverage and limitations, and how to reassess it when upgrading upstream crates.
 
 `output/native-preview/` contains the runtime bundle. `dist/` contains
-`davros-preview-v0.1.0-linux-amd64.tar.gz` and its `.sha256` file. The archive
+`davros-preview-v0.3.0-linux-amd64.tar.gz` and its `.sha256` file. The archive
 contains a single `native-preview/` directory, matching Davros's existing output
 layout. Build dependencies and test executables are not included.
 
@@ -59,19 +61,44 @@ RAYON_NUM_THREADS=2 \
 output/native-preview/davros-preview /path/to/input.xlsx /tmp/preview-job/preview.pdf
 ```
 
-Use the same command for DOC, DOCX, XLS, XLSX, PPT, and PPTX inputs.
+Use the same command for DOC, DOCX, XLS, XLSX, PPT, PPTX, ODT, ODS, and ODP inputs.
 Input extensions are case-insensitive. Conversion finishes before the
 PDF is available. The caller should enforce its own deadline and terminate the
 subprocess on cancellation (Davros uses 60 seconds).
 
-The executable enables Linux Landlock before parsing Office content, closes
-inherited descriptors other than standard I/O, and disables process dumping.
-It can read only the copied input, bundled fonts/configuration, and scratch;
-only scratch is writable. Execution of other programs is denied. Linux Landlock
-ABI 3 or newer is required; unavailable sandboxing fails closed. Newer ABIs add
-TCP, Unix socket, signal, and UDP restrictions. Metadata operations such as stat
-and chmod are not fully restricted. This supplements Sandstorm's grain sandbox.
-Sandstorm's experimental seccomp policy currently blocks these Landlock calls.
+Before parsing, the executable attempts each available protection independently:
+Linux Landlock, inherited-descriptor cleanup, disabled process dumping,
+no-new-privileges, and resource limits. Unavailable protections produce named
+warnings on stderr; conversion continues with the remaining protections.
+Landlock ABI 1 provides basic filesystem restrictions; later ABIs add truncation,
+device ioctl, TCP, Unix socket, signal, and UDP restrictions. A successful ABI
+query alone is not treated as successful enforcement.
+
+When filesystem isolation is active, reads are limited to input, bundled
+fonts/configuration and scratch, writes to scratch, and program execution is
+denied. Landlock does not restrict every operation (including some metadata
+operations). Without it, the converter retains the launcher's filesystem access.
+Sandstorm protects other grains, but does not by itself isolate this subprocess
+from files within its own grain. Availability depends on the actual kernel and
+outer sandbox policy; do not infer it from a kernel version or a host-side test.
+
+With the same environment and valid paths, inspect actual available protections:
+
+```sh
+output/native-preview/davros-preview --check-sandbox /path/to/input.xlsx /tmp/preview-job/preview.pdf
+```
+
+This applies protections in the checking process, emits JSON with per-feature
+`enabled`/`detail` fields and `degraded`, and exits without parsing or producing a
+PDF. Missing protections return success under the best-effort policy; invalid
+configuration fails. Run it inside the actual grain. Each conversion repeats the
+checks. A seccomp policy that kills rather than returns an error for a syscall can
+terminate the probe; the launcher must handle abnormal exits as well as JSON.
+Descriptor cleanup uses `close_range`, then `/proc/self/fd`, then bounded
+individual closes; the last fallback reports completeness as unverified.
+
+See [SECURITY.md](SECURITY.md) for the threat model, review findings and remaining
+hardening priorities.
 
 Legacy conversion runs in the same sandbox as PDF rendering. Intermediate OOXML
 files live in the private scratch directory and are deleted on normal completion
@@ -81,23 +108,26 @@ No external office suite is required at runtime.
 
 Limits: 32 MiB input (including intermediate OOXML), 10,000 ZIP entries, 32 MiB
 per decompressed entry, 128 MiB total decompression, 128 MiB PDF output, and
-4 GiB address space.
+4 GiB address space when the kernel permits the resource limit. Input and ZIP
+limits are enforced by the application. PDF size is checked before publication
+even without resource limits; existing outputs (including links) are never
+overwritten. Rendering can allocate memory before its output-size check. ODF
+also bounds recursive XML expansion and populated ODS cells (100,000 per sheet).
 
 ## Releases
 
 Push this project to its GitHub repository, then push a version tag matching
-`Cargo.toml`, for example `v0.1.0`. The workflow builds and tests before publishing
+`Cargo.toml`, for example `v0.3.0`. The workflow builds and tests before publishing
 the archive and SHA-256 file. Branches and pull requests also build/test and
-upload workflow artifacts, without publishing a release. No release has been
-published by this extraction.
+upload workflow artifacts, without publishing a release.
 
 When adopting a release, Davros should pin both its exact URL/version and SHA-256
-and extract the verified archive under `output/`. Davros's existing source/build
-integration is deliberately unchanged until that first release is published.
+and extract the verified archive under `output/`. Publishing here does not
+automatically update the version pinned by Davros.
 
 ## Tests and legacy conversion
 
-`test.sh` runs the Office Oxide unit suite (including our conversion regressions) and
+`test.sh` runs the Office Oxide and ODF renderer unit suites (including our conversion regressions) and
 exercises the packaged executable, selectable text, spreadsheet
 number formatting, prefixed SpreadsheetML, wide-sheet pagination, malformed
 input, legacy conversion, temporary-file cleanup, and sandbox enforcement. The
@@ -129,6 +159,31 @@ inputs expected to be rejected. Downloads are checksum-verified and kept out of
 the runtime bundle and Git. See [tests/corpus/README.md](tests/corpus/README.md)
 for reproduction commands and [the baseline evaluation](tests/corpus/BASELINE.md)
 for findings. A successful conversion is not a fidelity pass.
+
+## OpenDocument previews
+
+ODT, ODS and ODP run directly in the same sandboxed binary, with no LibreOffice
+installation or intermediate Office conversion. The renderer is checksum-pinned
+and patched through the normal build. Microsoft Office inputs retain their
+existing converters. The local integrated executable is 38.95 MiB, about
+648 KiB larger than the preceding Office-only build; fonts are separate in the
+runtime bundle.
+
+The ODF regression corpus includes 30 documents: 18 native LibreOffice QA files,
+three directly authored controls, and nine exported Office controls. The standard
+test command generates the three controls locally and checks the packaged binary,
+including uppercase extensions, text retention, page fields, cached cell formats,
+hidden sheets and invalid inputs. The larger fidelity comparison is optional;
+see [the corpus guide](tests/corpus/README.md).
+
+ODF previews remain approximate. Enhanced 2D paths and equation-driven shapes are
+rendered, but extruded 3D shapes, gradients, mixed text styles,
+font substitution, some table layouts and advanced chart features are incomplete.
+Spreadsheet formulas use saved results. Presentation footer declarations and slide
+numbers are resolved per slide when enabled; date/time fields retain saved text
+rather than using the server clock. SVG artwork is rasterized with bounded size;
+external image references and SVG text are disabled. Do not treat a successful
+conversion as a guarantee of visual fidelity.
 
 ## Licensing
 
