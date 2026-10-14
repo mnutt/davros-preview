@@ -285,3 +285,38 @@ and decoration, inline code borders, and some spacing. Its full comparison is
 A focused before/after/reference comparison is available locally as
 `tmp/writer-template-report.tar.gz` (about 472 KiB, 10 files), including the
 source, its license, three PDFs, three page images and build/source provenance.
+
+### Yocto kernel lab Unicode regression
+
+Manual validation uses [Kernel-lab-2.6.odt](https://wiki.yoctoproject.org/wiki/images/b/bb/Kernel-lab-2.6.odt),
+SHA-256 `ed840c2a06fba35c2cf98ba22b86701981cc20304ed9668f025e84df0e565922`.
+The downloaded document remains local under ignored `files/yocto/`; it is not
+part of the redistributable pinned corpus manifest. The packaged synthetic
+Unicode test reproduces its U+2023 triangular-bullet failure without downloading
+third-party material.
+
+Liberation lacks U+2023. Bundling Noto Sans Regular fixes the fatal conversion
+error while preserving the original selectable character. Build dependencies,
+font copying, runtime licenses and release-package checks include the fallback.
+The installed font adds 621,572 bytes (313,039 bytes with gzip -9); versions
+provided by other distributions can differ. No converter binary changes are
+needed for the font-only repair. All 31 existing ODF corpus cases retain exact
+extracted text and page breaks with this fallback, and packaged conversion
+regressions pass. The layout corrections below also change converter code.
+
+The initial font-only fix produced 28 pages versus LibreOffice's 31, including
+an extra first blank page. Follow-up layout fixes preserve heading page breaks,
+cover-master selection, centered image geometry, fractional sizes, bullet-list
+spacing/indentation, hanging paragraphs, footer logos/styles, and trailing code
+padding. The updated preview has 31 pages, matching the reference, with the
+cover on page one and introduction on page two, 99.95% reference-token recall,
+and no off-page words. All 105 ODF library tests and packaged conversion tests
+pass; the 31 production corpus PDFs match the evaluated debug PDFs byte for
+byte. Font substitution and exact
+wrapping still cause visual differences; page-count agreement is not a claim
+of pixel equivalence.
+
+Local inputs, PDFs and diagnostic outputs remain under `tmp/yocto/`. Copy only
+`tmp/yocto-layout-report.tar.gz` for the before/after/reference comparison; it
+contains the report and linked assets, without build caches or reference-engine
+profiles. The broader ODF comparison is `tmp/odf-yocto-layout-share.tar.gz`.

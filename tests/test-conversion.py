@@ -98,6 +98,39 @@ with tempfile.TemporaryDirectory(prefix='davros-preview-tests-') as tmp:
     assert b're f' in writer_pdf.read_bytes()
     print('PASS: Writer outline headings, explicit spaces and paragraph boxes')
 
+    # A cover master and heading page break must produce two pages, with no
+    # spurious first page and no normal footer painted on the cover.
+    cover_source = Path(tmp) / 'cover-layout.odt'
+    package_odf(cover_source, 'text',
+                '<office:text><text:p text:style-name="Start">Cover sentinel</text:p>'
+                '<text:h text:style-name="Chapter" text:outline-level="1">Introduction sentinel</text:h>'
+                '<text:p text:style-name="Body">Fractional size sentinel</text:p>'
+                '<text:p text:style-name="Code"><text:s text:c="4"/>CONFIG_MTD=y<text:s text:c="63"/></text:p></office:text>',
+                automatic='<style:style style:name="Start" style:family="paragraph" style:master-page-name="Cover"><style:paragraph-properties fo:break-before="page"/></style:style>'
+                '<style:style style:name="Chapter" style:family="paragraph"><style:paragraph-properties fo:break-before="page"/></style:style>'
+                '<style:style style:name="Body" style:family="paragraph"><style:text-properties fo:font-size="10.5pt"/></style:style>'
+                '<style:style style:name="Code" style:family="paragraph"><style:text-properties fo:font-size="10pt" fo:font-family="Liberation Mono"/></style:style>',
+                master='<style:footer><text:p>Body footer sentinel</text:p></style:footer>')
+    with zipfile.ZipFile(cover_source) as archive:
+        entries = {name: archive.read(name) for name in archive.namelist()}
+    entries['styles.xml'] = entries['styles.xml'].replace(b'</office:master-styles>',
+        b'<style:master-page style:name="Cover" style:page-layout-name="Page" style:next-style-name="Standard"><style:footer><text:p/></style:footer></style:master-page></office:master-styles>')
+    with zipfile.ZipFile(cover_source, 'w') as archive:
+        for name, data in entries.items():
+            archive.writestr(name, data)
+    cover_output = Path(tmp) / 'cover-output'
+    cover_output.mkdir()
+    cover_pdf = cover_output / 'preview.pdf'
+    subprocess.run([binary, cover_source, cover_pdf], env=env, check=True, timeout=60)
+    text = subprocess.check_output(['pdftotext', str(cover_pdf), '-'], text=True)
+    pages = text.split('\f')
+    assert len(pages) == 3, text
+    assert 'Cover sentinel' in pages[0] and 'Introduction sentinel' not in pages[0]
+    assert 'Body footer sentinel' not in pages[0] and 'Body footer sentinel' in pages[1]
+    assert 'Introduction sentinel' in pages[1] and 'CONFIG_MTD=y' in pages[1]
+    assert re.search(rb'/F[0-9]+ 10\.50? Tf', cover_pdf.read_bytes())
+    print('PASS: cover master, heading break, fractional font sizes and padded code')
+
     # Native enhanced geometry must survive the production SVG feature/dispatch.
     shapes_source = Path(tmp) / 'shapes.odp'
     package_odf(shapes_source, 'presentation', '<office:presentation><draw:page draw:name="Shapes"><draw:custom-shape svg:x="1in" svg:y="1in" svg:width="1in" svg:height="1in"><draw:enhanced-geometry draw:enhanced-path="U 10800 10800 10800 10800 0 360 Z U 10800 10800 5400 5400 0 360 Z N"/></draw:custom-shape><draw:frame svg:x="1in" svg:y="3in" svg:width="5in" svg:height="1in"><draw:text-box><text:p text:style-name="Both">Bold italic selectable text</text:p></draw:text-box></draw:frame></draw:page></office:presentation>',
@@ -116,7 +149,7 @@ with tempfile.TemporaryDirectory(prefix='davros-preview-tests-') as tmp:
 
     # Exercise embedded Unicode fonts inside Landlock, not just PDF base fonts.
     unicode_source = Path(tmp) / 'unicode.odt'
-    package_odf(unicode_source, 'text', '<office:text><text:p>Greek αβγ Cyrillic Привет</text:p></office:text>')
+    package_odf(unicode_source, 'text', '<office:text><text:p>Greek αβγ Cyrillic Привет</text:p><text:p>Triangular bullet ‣ Kernel lab</text:p></office:text>')
     scratch = Path(tmp) / 'unicode-output'
     scratch.mkdir()
     pdf = scratch / 'preview.pdf'
@@ -124,6 +157,9 @@ with tempfile.TemporaryDirectory(prefix='davros-preview-tests-') as tmp:
     subprocess.run([binary, unicode_source, pdf], env=unicode_env, check=True, timeout=60)
     text = subprocess.check_output(['pdftotext', str(pdf), '-'], text=True)
     assert 'αβγ' in text and 'Привет' in text, text
+    assert 'Triangular bullet ‣ Kernel lab' in text, text
+    fonts = subprocess.check_output(['pdffonts', str(pdf)], text=True)
+    assert 'NotoSans' in fonts, fonts
     print('PASS: bundled Unicode fonts override upstream font discovery')
 
     for ext in ('doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'odt', 'ods', 'odp'):

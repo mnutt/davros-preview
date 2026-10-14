@@ -48,3 +48,10 @@ font_license = next((p for p in [
 if font_license is None:
     raise SystemExit('Missing Liberation font license')
 shutil.copyfile(font_license, out / 'Liberation.txt')
+
+# The fallback font retains its embedded copyright and OFL metadata. Include
+# upstream OFL text as well; distro copyright files carry version-specific notices.
+shutil.copyfile(root / 'licenses/NotoSans-OFL.txt', out / 'NotoSans-OFL.txt')
+noto_copyright = Path('/usr/share/doc/fonts-noto-core/copyright')
+if noto_copyright.is_file():
+    shutil.copyfile(noto_copyright, out / 'NotoSans-distro-copyright.txt')

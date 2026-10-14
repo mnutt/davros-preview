@@ -19,6 +19,12 @@ for family in ['Sans', 'Serif', 'Mono']:
         if not matches:
             raise SystemExit(f'Missing {name}; install fonts-liberation')
         shutil.copyfile(matches[0], Path('output/native-preview/fonts') / name)
+# Noto Sans covers punctuation (including U+2023) missing from Liberation.
+name = 'NotoSans-Regular.ttf'
+matches = list(Path('/usr/share/fonts').rglob(name))
+if not matches:
+    raise SystemExit(f'Missing {name}; install fonts-noto-core')
+shutil.copyfile(matches[0], Path('output/native-preview/fonts') / name)
 PY
 cp fonts.conf THIRD_PARTY_NOTICES LICENSE output/native-preview/
 python3 package-licenses.py

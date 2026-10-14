@@ -36,4 +36,8 @@ corpus guide describe the logical changes, regression coverage and limitations.
 Liberation Fonts: SIL Open Font License 1.1
 https://github.com/liberationfonts/liberation-fonts
 
+Noto Sans Regular: SIL Open Font License 1.1
+https://github.com/notofonts/latin-greek-cyrillic
+Bundled as a Unicode fallback, including triangular bullet U+2023.
+
 The complete dependency versions are recorded in Cargo.lock.

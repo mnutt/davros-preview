@@ -10,7 +10,7 @@ if [[ -n "${GITHUB_REF_NAME:-}" && "${GITHUB_REF_TYPE:-}" == tag && "$GITHUB_REF
   echo 'Release tag must match Cargo.toml version.' >&2
   exit 1
 fi
-for file in davros-preview fonts.conf licenses/DEPENDENCIES.txt licenses/Liberation.txt; do
+for file in davros-preview fonts.conf licenses/DEPENDENCIES.txt licenses/Liberation.txt licenses/NotoSans-OFL.txt fonts/NotoSans-Regular.ttf; do
   test -s "output/native-preview/$file" || { echo "Missing $file; run ./build.sh first" >&2; exit 1; }
 done
 printf '%s\n' "$version" > output/native-preview/VERSION

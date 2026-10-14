@@ -466,3 +466,55 @@ edges, indentation after wrapping, source heading styles, and a packaged-binary
 synthetic template. The pinned public Writer example and the full ODF corpus
 provide visual and selectable-text comparisons. Keep these logical changes when
 rebasing the upstream patch; do not replace them with fixture-specific strings.
+
+### Writer cover pages, lists, and code-listing pagination
+
+The Yocto kernel-lab document exposed independent layout errors after the missing
+U+2023 glyph was resolved by packaging Noto Sans Regular:
+
+- `lo_writer/src/import.rs` honors inherited `break-before="page"` on headings
+  as well as paragraphs, and ignores a break before the first flow block. A
+  first-page master with a following body master and shared geometry supplies
+  distinct first-page headers/footers. Empty first-page headers no longer reserve
+  a fictitious header band. Different page geometries and arbitrary mid-document
+  master switches remain outside this change.
+- `lo_core/src/style.rs` retains fractional font sizes in thousandths of a point
+  alongside the existing integer field, plus signed ODF first-line indentation.
+  Writer uses the precise size for runs and line boxes; other importers retain
+  their existing defaults. This preserves the source's 10.5 pt body text.
+- `lo_core/src/writer.rs` and the Writer importer preserve ODF list indentation
+  and bullet characters by level. Writer removes its additional generic list
+  gaps when source spacing is present, and applies absolute source indentation
+  to nested lists. Numbering continuation and all numbering formats are not
+  implemented by this bullet-list change.
+- `lo_writer/src/layout.rs` discards end-of-paragraph space padding before
+  wrapping while retaining explicit leading/interior spaces. Long trailing
+  `text:s` runs in code listings had created empty lines and an extra page.
+  Hanging first lines receive their own available width; ODF tabs advance toward
+  half-inch stops, approximated with the selected font's space width. Arbitrary
+  tab-stop definitions, decimal tabs and leader characters remain incomplete.
+- ODF image groups retain graphic alignment and, for non-wrapping paragraph
+  anchors, vertical offsets and the anchor paragraph's line space. Footer raster
+  images are registered once and painted at their source offsets on normal pages;
+  first/left-page overrides suppress the normal artwork. Image placement inside
+  complex nested frames, transformed groups and independently styled repeated
+  instances remains approximate.
+- Page fields retain styled spans, fractional sizes, tabs, explicit line breaks,
+  and dynamic page numbers/counts. Their measured height reserves footer space.
+  `lo_calc/src/pdf.rs` handles the new shared styled-field variant recursively;
+  Calc's own field import and formatting are otherwise unchanged.
+
+`lo_writer/src/lib.rs` only initializes the new optional list metadata for
+Markdown lists. Unit tests cover first-master selection and heading breaks,
+fractional sizes, bullet levels, image alignment/offsets, trailing code padding,
+hanging first lines, and styled multi-line page fields. The packaged test builds
+a two-page synthetic cover document, checks page-specific footers and selectable
+text, and verifies the PDF retains a 10.5 pt font size. No public input is needed
+for these tests.
+
+The Yocto comparison now has 31 pages, matching LibreOffice, with the title on
+page one and introduction on page two. The full existing 31-case ODF corpus
+retains its page counts and passes content checks. This is not pixel equivalence:
+font substitution, exact wrapping/line breaking, and more complex ODF layouts
+remain approximate. See the corpus guide and local comparison report for the
+measured result and remaining differences.

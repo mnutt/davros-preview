@@ -14,18 +14,19 @@ The `davros-preview` executable supports these formats:
 
 PDF text remains selectable. Microsoft spreadsheet pages widen to fit all columns at their
 natural size, while still paginating vertically. ODS uses source page geometry and
-paginates horizontally and vertically. Only Liberation Sans, Serif,
-and Mono (regular, bold, italic, bold italic) are bundled. Font substitution can
+paginates horizontally and vertically. Liberation Sans, Serif,
+and Mono (regular, bold, italic, bold italic), plus Noto Sans Regular for
+additional Unicode coverage, are bundled. Font substitution can
 change wrapping and pagination; scripts outside this font set are not supported.
 
 ## Build and test
 
 Use Linux amd64, Rust 1.98.0 (pinned in `rust-toolchain.toml`), Python 3.12+,
-`patch`, a C/C++ toolchain, and Liberation fonts. Poppler is needed for tests.
+`patch`, a C/C++ toolchain, and Liberation/Noto Sans fonts. Poppler is needed for tests.
 On Debian 13:
 
 ```sh
-sudo apt-get install build-essential python3 patch fonts-liberation poppler-utils
+sudo apt-get install build-essential python3 patch fonts-liberation fonts-noto-core poppler-utils
 ./build.sh
 ./test.sh
 ./package.sh
@@ -189,4 +190,4 @@ conversion as a guarantee of visual fidelity.
 
 Project code is Apache-2.0, extracted from Davros. See `THIRD_PARTY_NOTICES` for
 converter modifications. Runtime archives contain collected dependency notices
-and the Liberation font license. Office Oxide is MIT/Apache-2.0.
+and the Liberation and Noto Sans font licenses. Office Oxide is MIT/Apache-2.0.
