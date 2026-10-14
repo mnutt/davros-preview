@@ -30,6 +30,8 @@ jobs:
             ~/.cargo/git
             target
           key: linux-amd64-rust-1.98-${{ hashFiles('Cargo.lock', 'Cargo.toml', 'patches/*', 'sources.json') }}
+          restore-keys: |
+            linux-amd64-rust-1.98-
       - name: Build
         run: ./build.sh
       - name: Test converters and sandbox
