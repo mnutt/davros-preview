@@ -207,8 +207,10 @@ limits and validation.
 
 `odf/` contains the maintained comparison runner, synthetic fixture generator,
 pinned native corpus manifest, and compact report exporter. The native manifest
-adds 18 LibreOffice QA documents. Together with directly authored controls and
-LibreOffice exports of Office fixtures, the evaluation covers 30 documents.
+adds 18 LibreOffice QA documents and Akbar Ahmed’s MIT-licensed Writer template
+(`Example file.odt`), pinned at `53a4119dfd2644fae4d4ec86bb6bfb1af4c5f520`.
+Together with directly authored controls and LibreOffice exports of Office
+fixtures, the evaluation covers 31 documents.
 Downloaded inputs and generated reports remain ignored; upstream licenses are
 retained under `licenses/` and included in report exports.
 
@@ -260,3 +262,26 @@ text against a refreshed reference time and remain visible in reports.
 The local visual checkpoint is `tmp/odf-round29`; its compact export is
 `tmp/odf-report-shapes-typography.tar.gz`. These are ignored local artifacts,
 not files supplied by a checkout. Regenerate reports with the commands above.
+
+### Writer template regression
+
+`writer-template-example-odt` is a one-page Cassandra data-modeling example from
+[libreoffice-writer-template](https://github.com/akbarahmed/libreoffice-writer-template).
+It exercises decimal outline numbering, headings inside list wrappers, colored
+callouts, a bordered multi-paragraph code block with explicit indentation, and
+a centered table header with independently styled cell edges. Its upstream MIT
+license is retained in `licenses/writer-template/LICENSE`; the manifest records
+the pinned source path, size and SHA-256. No downloaded document is committed.
+
+The updated renderer preserves all 202 reference tokens on one page, with no
+off-page words. All 31 ODF cases convert and pass their semantic checks; the
+previous 30 retain their page counts and token-recall scores. All 31 production
+PDFs are byte-identical to the debug PDFs used in the full evaluation; the
+packaged conversion tests and 99 ODF library tests also pass. Pixel equality is
+not claimed: the template still differs in base-font appearance, footer color
+and decoration, inline code borders, and some spacing. Its full comparison is
+`tmp/odf-writer-template-share.tar.gz` (about 3 MiB), containing only report assets.
+
+A focused before/after/reference comparison is available locally as
+`tmp/writer-template-report.tar.gz` (about 472 KiB, 10 files), including the
+source, its license, three PDFs, three page images and build/source provenance.

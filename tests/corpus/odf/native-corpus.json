@@ -18,6 +18,16 @@
           "sha256": "a853c2ffec17057872340eee242ae4d96cbf2b520ae27d903e1b2fef1a5f9d1c"
         }
       ]
+    },
+    "writer-template": {
+      "repository": "https://github.com/akbarahmed/libreoffice-writer-template",
+      "revision": "53a4119dfd2644fae4d4ec86bb6bfb1af4c5f520",
+      "license_files": [
+        {
+          "path": "LICENSE",
+          "sha256": "94cfb2d2c86b35a527d0c262e431110171136b3b2241752d146e65813463db90"
+        }
+      ]
     }
   },
   "fixtures": [
@@ -199,6 +209,16 @@
       "size": 11438,
       "sha256": "099163bc086c109d74d0b44b35a1be3c273ae33139166ede232a4ce325a6ff4f",
       "purpose": "numfmt",
+      "expect": "render"
+    },
+    {
+      "id": "writer-template-example-odt",
+      "source": "writer-template",
+      "path": "Example file.odt",
+      "file": "writer-template/example.odt",
+      "size": 49557,
+      "sha256": "76b0bed5f43ea7ea79033f3e9055a708a95e192f7530974e459e256c2e58fa35",
+      "purpose": "Technical Writer template: outline headings, code indentation, joined paragraph boxes, callouts and table borders",
       "expect": "render"
     }
   ]

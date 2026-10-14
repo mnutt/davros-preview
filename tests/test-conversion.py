@@ -75,6 +75,29 @@ with tempfile.TemporaryDirectory(prefix='davros-preview-tests-') as tmp:
             assert sorted(p.name for p in scratch.iterdir()) == ['preview.pdf']
             print('PASS:', source.name)
 
+    # Writer outline wrappers and joined code boxes, without a network fixture.
+    writer_source = Path(tmp) / 'writer-template.odt'
+    package_odf(writer_source, 'text',
+                '<office:text><text:h text:outline-level="1">Introduction</text:h>'
+                '<text:list><text:list-item><text:h text:outline-level="2">Model</text:h></text:list-item></text:list>'
+                '<text:p text:style-name="Code">CREATE TABLE</text:p>'
+                '<text:p text:style-name="Code"><text:s text:c="4"/>country_id uuid,</text:p></office:text>',
+                automatic='<style:style style:name="Code" style:family="paragraph"><style:paragraph-properties fo:background-color="#fff5e0" fo:border="0.5pt solid #ff0000" fo:padding="2pt"/><style:text-properties fo:font-family="Liberation Mono" fo:font-size="10pt"/></style:style>',
+                styles='<text:outline-style><text:outline-level-style text:level="1" style:num-format="1"/><text:outline-level-style text:level="2" style:num-format="1" text:display-levels="2"/></text:outline-style>')
+    writer_output = Path(tmp) / 'writer-output'
+    writer_output.mkdir()
+    writer_pdf = writer_output / 'preview.pdf'
+    subprocess.run([binary, writer_source, writer_pdf], env=env, check=True, timeout=60)
+    text = subprocess.check_output(['pdftotext', '-layout', str(writer_pdf), '-'], text=True)
+    compact = ''.join(text.split())
+    assert '1Introduction' in compact and '1.1Model' in compact, text
+    assert re.search(r'^ +country_id uuid,', text, re.MULTILINE), text
+    assert text.count('\f') == 1
+    # Solid borders use stroke colors; paragraph fills are PDF rectangles.
+    assert b'1.000 0.000 0.000 RG' in writer_pdf.read_bytes()
+    assert b're f' in writer_pdf.read_bytes()
+    print('PASS: Writer outline headings, explicit spaces and paragraph boxes')
+
     # Native enhanced geometry must survive the production SVG feature/dispatch.
     shapes_source = Path(tmp) / 'shapes.odp'
     package_odf(shapes_source, 'presentation', '<office:presentation><draw:page draw:name="Shapes"><draw:custom-shape svg:x="1in" svg:y="1in" svg:width="1in" svg:height="1in"><draw:enhanced-geometry draw:enhanced-path="U 10800 10800 10800 10800 0 360 Z U 10800 10800 5400 5400 0 360 Z N"/></draw:custom-shape><draw:frame svg:x="1in" svg:y="3in" svg:width="5in" svg:height="1in"><draw:text-box><text:p text:style-name="Both">Bold italic selectable text</text:p></draw:text-box></draw:frame></draw:page></office:presentation>',

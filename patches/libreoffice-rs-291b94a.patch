@@ -5705,3 +5705,899 @@ index 97f75b3..640dd0d 100644
          }
      }
  }
+--- a/crates/lo_core/src/style.rs
++++ b/crates/lo_core/src/style.rs
+@@ -26,7 +26,20 @@
+ }
+
+ #[derive(Clone, Debug, Default, PartialEq, Eq)]
++pub struct OdfParagraphBox {
++    pub background: String,
++    /// Left, right, top, bottom.
++    pub borders: [String; 4],
++    pub padding_mpt: [u32; 4],
++    pub join: bool,
++}
++
++#[derive(Clone, Debug, Default, PartialEq, Eq)]
+ pub struct ParagraphStyle {
++    /// ODF paragraph decoration; lengths are thousandths of a point.
++    pub odf_box: Option<OdfParagraphBox>,
++    /// Top, bottom, left, right margins in thousandths of a point.
++    pub odf_margins_mpt: Option<[i32; 4]>,
+     pub source_spacing: bool,
+     pub line_height_percent: u16,
+     pub alignment: Alignment,
+--- a/crates/lo_core/src/writer.rs
++++ b/crates/lo_core/src/writer.rs
+@@ -82,6 +82,7 @@
+
+ #[derive(Clone, Debug, Default, PartialEq)]
+ pub struct OdfTableLayout {
++    pub edge_borders: std::collections::BTreeMap<(usize, usize), [String; 4]>,
+     pub columns: Vec<f32>,
+     /// Zero spans mark covered cells; all other cells default to (1, 1).
+     pub spans: std::collections::BTreeMap<(usize, usize), (usize, usize)>,
+--- a/crates/lo_writer/src/import.rs
++++ b/crates/lo_writer/src/import.rs
+@@ -108,8 +108,9 @@
+             }
+         }
+         if !page_emitted && !normalized.trim().is_empty() {
+-            doc.body
+-                .push(Block::Paragraph(Paragraph::plain(normalized.trim().to_string())));
++            doc.body.push(Block::Paragraph(Paragraph::plain(
++                normalized.trim().to_string(),
++            )));
+             emitted_any = true;
+         }
+     }
+@@ -369,10 +370,9 @@
+     }
+     fn walk_inline(inline: &mut Inline, foot: &mut u32, endn: &mut u32) {
+         match inline {
+-            Inline::Text(t)
+-            | Inline::Bold(t)
+-            | Inline::Italic(t)
+-            | Inline::Code(t) => *t = replace_in_text(t, foot, endn),
++            Inline::Text(t) | Inline::Bold(t) | Inline::Italic(t) | Inline::Code(t) => {
++                *t = replace_in_text(t, foot, endn)
++            }
+             Inline::Link { label, .. } => *label = replace_in_text(label, foot, endn),
+             Inline::Styled { text, .. } => *text = replace_in_text(text, foot, endn),
+             Inline::LineBreak => {}
+@@ -501,6 +501,14 @@
+         }
+     }
+     enrich(&mut doc.body, &table_nodes, &named);
++    if zip.contains("styles.xml") {
++        let root = parse_xml_document(&zip.read_string("styles.xml")?)?;
++        let mut outlines = Vec::new();
++        root.descendants_named("outline-style", &mut outlines);
++        if let Some(outline) = outlines.first() {
++            number_odt_headings(&mut doc.body, outline, &mut [0; 10]);
++        }
++    }
+     Ok(doc)
+ }
+
+@@ -541,7 +549,9 @@
+     // Map abstractNumId -> ordered?
+     let mut abstracts: BTreeMap<String, bool> = BTreeMap::new();
+     for an in root.children_named("abstractNum") {
+-        let Some(id) = an.attr("abstractNumId") else { continue };
++        let Some(id) = an.attr("abstractNumId") else {
++            continue;
++        };
+         let mut ordered = false;
+         for lvl in an.children_named("lvl") {
+             if lvl.attr("ilvl").unwrap_or("") != "0" {
+@@ -555,7 +565,9 @@
+         abstracts.insert(id.to_string(), ordered);
+     }
+     for num in root.children_named("num") {
+-        let Some(num_id) = num.attr("numId") else { continue };
++        let Some(num_id) = num.attr("numId") else {
++            continue;
++        };
+         let abstract_id = num
+             .child("abstractNumId")
+             .and_then(|n| n.attr("val"))
+@@ -792,7 +804,8 @@
+             }
+             // Track-changes wrappers — descend so we don't lose the
+             // <w:r> children that hold the actual deleted/inserted text.
+-            "ins" | "del" | "moveTo" | "moveFrom" | "smartTag" | "customXml" | "sdt" | "sdtContent" => {
++            "ins" | "del" | "moveTo" | "moveFrom" | "smartTag" | "customXml" | "sdt"
++            | "sdtContent" => {
+                 walk_paragraph_items(&child.items, base, hyperlink.clone(), relationships, info);
+             }
+             _ => {}
+@@ -915,11 +928,7 @@
+                 for row in &nested.rows {
+                     for c in &row.cells {
+                         for p in &c.paragraphs {
+-                            if !p
+-                                .spans
+-                                .iter()
+-                                .all(|inline| inline_text(inline).is_empty())
+-                            {
++                            if !p.spans.iter().all(|inline| inline_text(inline).is_empty()) {
+                                 out.push(p.clone());
+                             }
+                         }
+@@ -975,13 +984,49 @@
+                 code: font.to_ascii_lowercase().contains("mono")
+                     || font.to_ascii_lowercase().contains("courier"),
+                 paragraph_style: Some(lo_core::ParagraphStyle {
++                    odf_margins_mpt: Some(
++                        ["margin-top", "margin-bottom", "margin-left", "margin-right"].map(
++                            |side| {
++                                get("paragraph-properties", side)
++                                    .and_then(lo_core::style::odf_length)
++                                    .map(|pt| (pt.clamp(0.0, 3000.0) * 1000.0).round() as i32)
++                                    .unwrap_or(0)
++                            },
++                        ),
++                    ),
++                    odf_box: Some(lo_core::style::OdfParagraphBox {
++                        background: get("paragraph-properties", "background-color")
++                            .unwrap_or("")
++                            .into(),
++                        borders: ["border-left", "border-right", "border-top", "border-bottom"]
++                            .map(|side| {
++                                get("paragraph-properties", side)
++                                    .or_else(|| get("paragraph-properties", "border"))
++                                    .unwrap_or("")
++                                    .into()
++                            }),
++                        padding_mpt: [
++                            "padding-left",
++                            "padding-right",
++                            "padding-top",
++                            "padding-bottom",
++                        ]
++                        .map(|side| {
++                            get("paragraph-properties", side)
++                                .or_else(|| get("paragraph-properties", "padding"))
++                                .and_then(lo_core::style::odf_length)
++                                .map(|pt| (pt.clamp(0.0, 1000.0) * 1000.0) as u32)
++                                .unwrap_or(0)
++                        }),
++                        join: get("paragraph-properties", "join-border") != Some("false"),
++                    }),
+                     source_spacing: true,
+                     line_height_percent: get("paragraph-properties", "line-height")
+                         .and_then(|v| v.strip_suffix('%'))
+                         .and_then(|v| v.parse::<f32>().ok())
+                         .filter(|v| v.is_finite())
+                         .map(|v| v.clamp(10.0, 1000.0).round() as u16)
+-                        .unwrap_or(120),
++                        .unwrap_or(100),
+                     alignment: match get("paragraph-properties", "text-align") {
+                         Some("center") => lo_core::Alignment::Center,
+                         Some("right" | "end") => lo_core::Alignment::End,
+@@ -1051,6 +1096,88 @@
+         target.underline |= source.underline;
+     }
+     out
++}
++
++fn number_odt_headings(blocks: &mut [Block], outline: &XmlNode, counters: &mut [u32; 10]) {
++    for block in blocks {
++        match block {
++            Block::Heading(h) => {
++                let level = usize::from(h.level.clamp(1, 10));
++                let Some(rule) = outline
++                    .children_named("outline-level-style")
++                    .find(|n| n.attr("level").and_then(|s| s.parse::<usize>().ok()) == Some(level))
++                else {
++                    continue;
++                };
++                if rule.attr("num-format") != Some("1") {
++                    continue;
++                }
++                let start = rule
++                    .attr("start-value")
++                    .and_then(|s| s.parse::<u32>().ok())
++                    .unwrap_or(1)
++                    .max(1);
++                counters[level - 1] = if counters[level - 1] == 0 {
++                    start
++                } else {
++                    counters[level - 1].saturating_add(1)
++                };
++                counters[level..].fill(0);
++                let display = rule
++                    .attr("display-levels")
++                    .and_then(|s| s.parse::<usize>().ok())
++                    .unwrap_or(1)
++                    .clamp(1, level);
++                let number = counters[level - display..level]
++                    .iter()
++                    .map(u32::to_string)
++                    .collect::<Vec<_>>()
++                    .join(".");
++                let mut label = format!(
++                    "{}{}{}",
++                    rule.attr("num-prefix").unwrap_or(""),
++                    number,
++                    rule.attr("num-suffix").unwrap_or("")
++                );
++                let alignment = rule
++                    .child("list-level-properties")
++                    .and_then(|n| n.child("list-level-label-alignment"));
++                let size = h.content.text_style.font_size_pt.max(1) as f32;
++                let gap = alignment
++                    .filter(|n| n.attr("label-followed-by") == Some("listtab"))
++                    .and_then(|n| n.attr("list-tab-stop-position"))
++                    .and_then(lo_core::style::odf_length)
++                    .map(|stop| {
++                        ((stop
++                            - crate::font_metrics::measure_text(
++                                &label,
++                                size,
++                                lo_core::PdfFont::HelveticaBold,
++                            ))
++                            / (size * 0.278))
++                            .round()
++                            .clamp(1.0, 32.0) as usize
++                    })
++                    .unwrap_or(1);
++                label.push_str(&"\u{a0}".repeat(gap));
++                h.content.spans.insert(
++                    0,
++                    Inline::Styled {
++                        text: label,
++                        style: h.content.text_style.clone(),
++                        url: None,
++                    },
++                );
++            }
++            Block::List(list) => {
++                for item in &mut list.items {
++                    number_odt_headings(&mut item.blocks, outline, counters);
++                }
++            }
++            Block::Section(section) => number_odt_headings(&mut section.blocks, outline, counters),
++            _ => {}
++        }
++    }
+ }
+
+ fn parse_odt_text_children(
+@@ -1105,7 +1232,14 @@
+                         });
+                     }
+                 }
+-                if !items.is_empty() {
++                if !items.is_empty()
++                    && items
++                        .iter()
++                        .all(|item| item.blocks.iter().all(|b| matches!(b, Block::Heading(_))))
++                {
++                    doc.body
++                        .extend(items.into_iter().flat_map(|item| item.blocks));
++                } else if !items.is_empty() {
+                     doc.body.push(Block::List(ListBlock {
+                         ordered: false,
+                         items,
+@@ -1396,7 +1530,7 @@
+                         .and_then(|value| value.parse::<usize>().ok())
+                         .unwrap_or(1);
+                     spans.push(StyledSpan {
+-                        text: " ".repeat(count),
++                        text: "\u{a0}".repeat(count.min(10_000)),
+                         style: inherited.clone(),
+                     });
+                 }
+@@ -1468,6 +1602,23 @@
+             ) {
+                 layout.backgrounds.insert((r, c), value.into());
+             }
++            layout.edge_borders.insert(
++                (r, c),
++                ["border-left", "border-right", "border-top", "border-bottom"].map(|side| {
++                    styles
++                        .property_in(name, "table-cell", "table-cell-properties", side)
++                        .or_else(|| {
++                            styles.property_in(
++                                name,
++                                "table-cell",
++                                "table-cell-properties",
++                                "border",
++                            )
++                        })
++                        .unwrap_or("")
++                        .into()
++                }),
++            );
+             if let Some(value) =
+                 styles.property_in(name, "table-cell", "table-cell-properties", "border")
+             {
+@@ -1664,3 +1815,81 @@
+         }
+     }
+ }
++
++#[cfg(test)]
++mod writer_template_tests {
++    use super::*;
++
++    #[test]
++    fn outline_headings_in_list_wrappers_are_numbered_without_bullets() {
++        let content = r#"<document-content><body><text><h outline-level="1">Introduction</h><list><list-item><list><list-item><h outline-level="2">Model</h></list-item></list></list-item></list><h outline-level="2">Query</h><h outline-level="1">Next</h><h outline-level="2">Reset</h></text></body></document-content>"#;
++        let styles = r#"<document-styles><styles><outline-style><outline-level-style level="1" num-format="1"/><outline-level-style level="2" num-format="1" display-levels="2"/></outline-style></styles></document-styles>"#;
++        let mut bytes = std::io::Cursor::new(Vec::new());
++        lo_zip::write_zip(
++            &mut bytes,
++            &[
++                lo_zip::ZipEntry::new("content.xml", content.as_bytes().to_vec()),
++                lo_zip::ZipEntry::new("styles.xml", styles.as_bytes().to_vec()),
++            ],
++        )
++        .unwrap();
++        let doc = from_odt_bytes("outline", &bytes.into_inner()).unwrap();
++        let headings: Vec<_> = doc
++            .body
++            .iter()
++            .map(|b| match b {
++                Block::Heading(h) => h.content.to_plain_text().replace('\u{a0}', " "),
++                _ => panic!("outline wrappers must not create list bullets"),
++            })
++            .collect();
++        assert_eq!(
++            headings,
++            [
++                "1 Introduction",
++                "1.1 Model",
++                "1.2 Query",
++                "2 Next",
++                "2.1 Reset"
++            ]
++        );
++    }
++
++    #[test]
++    fn paragraph_boxes_inherit_and_explicit_spaces_survive() {
++        let root = parse_xml_document(r##"<styles><style name="Base" family="paragraph"><paragraph-properties background-color="#fff5e0" border="0.5pt solid #ff0000" padding="2pt" margin-bottom="0.05in"/></style><style name="Code" family="paragraph" parent-style-name="Base"><paragraph-properties border-left="none"/></style></styles>"##).unwrap();
++        let mut named = lo_core::style::OdfStyles::default();
++        named.collect(&root);
++        let styles = parse_odt_styles(&named);
++        let node =
++            parse_xml_document(r#"<p style-name="Code"><s c="4"/>indented<s c="1000000"/>end</p>"#)
++                .unwrap();
++        let paragraph = parse_odt_paragraph(&node, &styles);
++        let decoration = paragraph.style.odf_box.as_ref().unwrap();
++        assert_eq!(decoration.background, "#fff5e0");
++        assert_eq!(decoration.borders[0], "none");
++        assert_eq!(decoration.borders[1], "0.5pt solid #ff0000");
++        assert_eq!(decoration.padding_mpt, [2000; 4]);
++        assert_eq!(paragraph.style.odf_margins_mpt.unwrap()[1], 3600);
++        let text = paragraph.to_plain_text();
++        assert!(text.starts_with("\u{a0}\u{a0}\u{a0}\u{a0}indented"));
++        assert_eq!(text.matches('\u{a0}').count(), 10004);
++    }
++
++    #[test]
++    fn table_borders_preserve_each_edge() {
++        let root = parse_xml_document(r##"<styles><style name="Cell" family="table-cell"><table-cell-properties border="0.5pt solid #aaaaaa" border-top="none"/></style></styles>"##).unwrap();
++        let mut styles = lo_core::style::OdfStyles::default();
++        styles.collect(&root);
++        let node = parse_xml_document(r#"<table><table-row><table-cell style-name="Cell"><p>Body</p></table-cell></table-row></table>"#).unwrap();
++        let layout = odt_table_layout(&node, &styles);
++        assert_eq!(
++            layout.edge_borders[&(0, 0)],
++            [
++                "0.5pt solid #aaaaaa",
++                "0.5pt solid #aaaaaa",
++                "none",
++                "0.5pt solid #aaaaaa"
++            ]
++        );
++    }
++}
+--- a/crates/lo_writer/src/layout.rs
++++ b/crates/lo_writer/src/layout.rs
+@@ -283,6 +283,40 @@
+                 y = render_heading(&ctx, &mut pdf, &mut page_index, y, heading);
+             }
+             Block::Paragraph(paragraph) => {
++                let mut joined = paragraph.clone();
++                let mut end = block_index + 1;
++                if paragraph.style.odf_box.as_ref().is_some_and(|b| {
++                    b.join
++                        && parse_color(&b.background).is_some()
++                        && b.borders.iter().any(|v| v.contains("solid"))
++                }) {
++                    while let Some(Block::Paragraph(next)) = doc.body.get(end) {
++                        if next.style != paragraph.style || next.text_style != paragraph.text_style
++                        {
++                            break;
++                        }
++                        joined.spans.push(Inline::LineBreak);
++                        joined.spans.extend(next.spans.clone());
++                        end += 1;
++                    }
++                    if end > block_index + 1 {
++                        let size = paragraph.text_style.font_size_pt.max(1) as f32;
++                        joined.style.line_height_percent = (joined.style.line_height_percent as f32
++                            + (paragraph_margins(paragraph)[0] + paragraph_margins(paragraph)[1])
++                                / (size
++                                    * odf_line_metric(ctx.fonts.pick(
++                                        Some(&paragraph.text_style.font_family),
++                                        paragraph.text_style.bold,
++                                        paragraph.text_style.italic,
++                                    )))
++                                * 100.0)
++                            .round()
++                            .clamp(10.0, 1000.0)
++                            as u16;
++                        skip_until = end;
++                    }
++                }
++                let paragraph = &joined;
+                 y = render_paragraph(
+                     &ctx,
+                     &mut pdf,
+@@ -439,7 +473,11 @@
+     let paragraph = styled_heading_paragraph(heading, size);
+     let role = format!("H{}", heading.level.clamp(1, 6));
+     y = render_paragraph(ctx, pdf, page_index, y, &paragraph, size, 0.0, &role);
+-    y - HEADING_TRAILING_GAP
++    y - if heading.content.style.source_spacing {
++        0.0
++    } else {
++        HEADING_TRAILING_GAP
++    }
+ }
+
+ fn heading_font_size(level: u8) -> f32 {
+@@ -454,12 +492,16 @@
+
+ fn styled_heading_paragraph(heading: &Heading, size: f32) -> Paragraph {
+     let mut paragraph = heading.content.clone();
++    if paragraph.style.source_spacing {
++        return paragraph;
++    }
+     paragraph.text_style.font_size_pt = size.round() as u16;
+     paragraph.text_style.bold = true;
+-    paragraph.style.margin_top_mm = paragraph
+-        .style
+-        .margin_top_mm
+-        .max(if heading.level == 1 { 2 } else { 3 });
++    paragraph.style.margin_top_mm =
++        paragraph
++            .style
++            .margin_top_mm
++            .max(if heading.level == 1 { 2 } else { 3 });
+     paragraph.style.margin_bottom_mm = paragraph.style.margin_bottom_mm.max(2);
+     paragraph
+ }
+@@ -473,7 +515,11 @@
+         ctx.page_w - ctx.margin_l - ctx.margin_r,
+         &ctx.fonts,
+         2,
+-    ) + HEADING_TRAILING_GAP
++    ) + if heading.content.style.source_spacing {
++        0.0
++    } else {
++        HEADING_TRAILING_GAP
++    }
+ }
+
+ fn render_list(
+@@ -604,6 +650,46 @@
+     }
+ }
+
++fn paragraph_margins(paragraph: &Paragraph) -> [f32; 4] {
++    paragraph
++        .style
++        .odf_margins_mpt
++        .map(|m| m.map(|v| v as f32 / 1000.0))
++        .unwrap_or([
++            mm_to_pt(paragraph.style.margin_top_mm),
++            mm_to_pt(paragraph.style.margin_bottom_mm),
++            mm_to_pt(paragraph.style.margin_left_mm),
++            mm_to_pt(paragraph.style.margin_right_mm),
++        ])
++}
++
++// hhea ascender - descender + lineGap, divided by unitsPerEm, for the
++// bundled Liberation families. ODF percentage spacing multiplies this natural
++// line box, not the nominal em size. Non-ODF layout keeps its existing policy.
++fn odf_line_metric(font: PdfFont) -> f32 {
++    if matches!(font, PdfFont::Courier) {
++        2320.0 / 2048.0
++    } else {
++        2355.0 / 2048.0
++    }
++}
++fn odf_descent(font: PdfFont) -> f32 {
++    match font {
++        PdfFont::Courier => 615.0 / 2048.0,
++        PdfFont::TimesRoman | PdfFont::TimesBold | PdfFont::TimesItalic => 443.0 / 2048.0,
++        _ => 434.0 / 2048.0,
++    }
++}
++fn run_line_height(paragraph: &Paragraph, run: &StyledRun) -> f32 {
++    run.size
++        * paragraph_line_factor(paragraph)
++        * if paragraph.style.source_spacing {
++            odf_line_metric(run.font)
++        } else {
++            1.0
++        }
++}
++
+ fn paragraph_line_factor(paragraph: &Paragraph) -> f32 {
+     if paragraph.style.line_height_percent > 0 {
+         paragraph.style.line_height_percent as f32 / 100.0
+@@ -621,6 +707,47 @@
+         default_size
+     };
+     size * paragraph_line_factor(paragraph)
++        * if paragraph.style.source_spacing {
++            2355.0 / 2048.0
++        } else {
++            1.0
++        }
++}
++
++fn draw_edges(
++    page: &mut lo_core::PdfPage,
++    x: f32,
++    top: f32,
++    width: f32,
++    height: f32,
++    borders: &[String; 4],
++) {
++    for (side, border) in borders.iter().enumerate() {
++        let mut parts = border.split_whitespace();
++        let Some(thickness) = parts
++            .next()
++            .and_then(lo_core::style::odf_length)
++            .filter(|v| *v > 0.0)
++        else {
++            continue;
++        };
++        if parts.next() != Some("solid") {
++            continue;
++        }
++        let (r, g, b) = parts
++            .next()
++            .and_then(parse_color)
++            .unwrap_or((0.0, 0.0, 0.0));
++        page.line_width(thickness.clamp(0.25, 100.0));
++        let (x1, y1, x2, y2) = match side {
++            0 => (x, top, x, top - height),
++            1 => (x + width, top, x + width, top - height),
++            2 => (x, top, x + width, top),
++            _ => (x, top - height, x + width, top - height),
++        };
++        page.line_rgb(x1, y1, x2, y2, r, g, b);
++    }
++    page.line_width(1.0);
+ }
+
+ fn render_paragraph(
+@@ -633,16 +760,23 @@
+     extra_indent: f32,
+     semantic_role: &str,
+ ) -> f32 {
+-    let left = ctx.margin_l + mm_to_pt(paragraph.style.margin_left_mm) + extra_indent;
+-    let right = ctx.margin_r + mm_to_pt(paragraph.style.margin_right_mm);
++    let padding = paragraph
++        .style
++        .odf_box
++        .as_ref()
++        .map(|b| b.padding_mpt.map(|n| n as f32 / 1000.0))
++        .unwrap_or([0.0; 4]);
++    let margins = paragraph_margins(paragraph);
++    let left = ctx.margin_l + margins[2] + extra_indent + padding[0];
++    let right = ctx.margin_r + margins[3] + padding[1];
+     let available_width = (ctx.page_w - left - right).max(48.0);
+-    let margin_top = mm_to_pt(paragraph.style.margin_top_mm);
++    let margin_top = margins[0];
+     let minimum_bottom_mm = if paragraph.style.source_spacing {
+         0
+     } else {
+         minimum_paragraph_bottom_mm(semantic_role)
+     };
+-    let margin_bottom = mm_to_pt(paragraph.style.margin_bottom_mm.max(minimum_bottom_mm));
++    let margin_bottom = margins[1].max(mm_to_pt(minimum_bottom_mm));
+     let runs = paragraph_runs(paragraph, default_size, &ctx.fonts);
+     let lines = layout_runs(&runs, available_width);
+     let line_heights = lines
+@@ -650,7 +784,7 @@
+         .map(|line| {
+             line.runs
+                 .iter()
+-                .map(|run| run.size * paragraph_line_factor(paragraph))
++                .map(|run| run_line_height(paragraph, run))
+                 .fold(
+                     if paragraph.style.source_spacing {
+                         paragraph_empty_line_height(paragraph, default_size, line.runs.is_empty())
+@@ -661,7 +795,8 @@
+                 )
+         })
+         .collect::<Vec<_>>();
+-    let total_height = margin_top + line_heights.iter().sum::<f32>() + margin_bottom;
++    let total_height =
++        margin_top + padding[2] + line_heights.iter().sum::<f32>() + padding[3] + margin_bottom;
+     let content_height = ctx.page_h - ctx.margin_t - ctx.margin_b;
+     if total_height <= content_height
+         && y - total_height < ctx.margin_b
+@@ -671,10 +806,51 @@
+         y = ctx.page_h - ctx.margin_t;
+     }
+     y -= margin_top;
+-
++    // Draw decoration per page fragment so long paragraphs remain bounded to a page.
++    let mut fragment_start = true;
+     for (line_index, line) in lines.iter().enumerate() {
+         let line_height = line_heights[line_index];
+-        y = ensure_room(ctx, pdf, page_index, y, line_height + 2.0);
++        let old_page = *page_index;
++        y = ensure_room(
++            ctx,
++            pdf,
++            page_index,
++            y,
++            line_height + padding[2] + padding[3] + 2.0,
++        );
++        fragment_start |= *page_index != old_page;
++        if fragment_start {
++            let remaining: f32 = line_heights[line_index..].iter().sum();
++            let height = (remaining + padding[2] + padding[3])
++                .min(y - ctx.margin_b)
++                .max(0.0);
++            if let Some(b) = &paragraph.style.odf_box {
++                let page = pdf.page_mut(*page_index).expect("paragraph page");
++                page.begin_artifact();
++                if let Some((r, g, blue)) = parse_color(&b.background) {
++                    page.rect_fill_rgb(
++                        left - padding[0],
++                        y - height,
++                        available_width + padding[0] + padding[1],
++                        height,
++                        r,
++                        g,
++                        blue,
++                    );
++                }
++                draw_edges(
++                    page,
++                    left - padding[0],
++                    y,
++                    available_width + padding[0] + padding[1],
++                    height,
++                    &b.borders,
++                );
++                page.end_artifact();
++            }
++            y -= padding[2];
++            fragment_start = false;
++        }
+         // `y` is the free block boundary; PDF text APIs take a baseline.
+         // Descend by one line box before drawing so glyph ascenders never
+         // intrude into the preceding table, paragraph, or page margin.
+@@ -701,7 +877,14 @@
+             pdf.page_mut(*page_index).expect("page"),
+             line,
+             left,
+-            y,
++            y + if paragraph.style.source_spacing {
++                line.runs
++                    .iter()
++                    .map(|run| run.size * odf_descent(run.font))
++                    .fold(0.0, f32::max)
++            } else {
++                0.0
++            },
+             paragraph.style.alignment.clone(),
+             available_width,
+             justify,
+@@ -709,7 +892,7 @@
+         );
+     }
+
+-    y - margin_bottom
++    y - margin_bottom - padding[3]
+ }
+
+ fn paragraph_height(
+@@ -719,17 +902,26 @@
+     fonts: &FontResolver,
+     minimum_bottom_mm: u16,
+ ) -> f32 {
++    let margins = paragraph_margins(paragraph);
++    let padding = paragraph
++        .style
++        .odf_box
++        .as_ref()
++        .map(|b| b.padding_mpt.map(|v| v as f32 / 1000.0))
++        .unwrap_or([0.0; 4]);
+     let lines = layout_runs(
+         &paragraph_runs(paragraph, default_size, fonts),
+-        available_width,
++        (available_width - margins[2] - margins[3] - padding[0] - padding[1]).max(48.0),
+     );
+-    mm_to_pt(paragraph.style.margin_top_mm)
++    margins[0]
++        + padding[2]
++        + padding[3]
+         + lines
+             .iter()
+             .map(|line| {
+                 line.runs
+                     .iter()
+-                    .map(|run| run.size * paragraph_line_factor(paragraph))
++                    .map(|run| run_line_height(paragraph, run))
+                     .fold(
+                         if paragraph.style.source_spacing {
+                             paragraph_empty_line_height(
+@@ -744,16 +936,11 @@
+                     )
+             })
+             .sum::<f32>()
+-        + mm_to_pt(
+-            paragraph
+-                .style
+-                .margin_bottom_mm
+-                .max(if paragraph.style.source_spacing {
+-                    0
+-                } else {
+-                    minimum_bottom_mm
+-                }),
+-        )
++        + margins[1].max(if paragraph.style.source_spacing {
++            0.0
++        } else {
++            mm_to_pt(minimum_bottom_mm)
++        })
+ }
+
+ fn minimum_paragraph_bottom_mm(semantic_role: &str) -> u16 {
+@@ -826,13 +1013,17 @@
+                 {
+                     page.rect_fill_rgb(x, y - cell_height, width, cell_height, red, green, blue);
+                 }
+-                if let Some(border) = layout.borders.get(&(r, c)).filter(|s| s.as_str() != "none") {
+-                    let (red, green, blue) = border
+-                        .split_whitespace()
+-                        .last()
+-                        .and_then(parse_color)
+-                        .unwrap_or((0.0, 0.0, 0.0));
+-                    page.rect_stroke_rgb(x, y - cell_height, width, cell_height, red, green, blue);
++                if let Some(edges) = layout.edge_borders.get(&(r, c)) {
++                    draw_edges(page, x, y, width, cell_height, edges);
++                } else if let Some(border) = layout.borders.get(&(r, c)) {
++                    draw_edges(
++                        page,
++                        x,
++                        y,
++                        width,
++                        cell_height,
++                        &std::array::from_fn(|_| border.clone()),
++                    );
+                 }
+                 let mut baseline = y
+                     - 2.0
+@@ -846,7 +1037,11 @@
+                         line,
+                         x + 2.0,
+                         baseline,
+-                        Alignment::Start,
++                        table.rows[r].cells[c]
++                            .paragraphs
++                            .first()
++                            .map(|p| p.style.alignment.clone())
++                            .unwrap_or_default(),
+                         width - 4.0,
+                         false,
+                         "TD",
+@@ -934,9 +1129,7 @@
+                         .collect::<Vec<_>>()
+                 })
+                 .fold(0.0_f32, f32::max);
+-            let minimum = (longest_token
+-                + TABLE_CELL_HORIZONTAL_PADDING
+-                + TABLE_WORD_FIT_SLOP)
++            let minimum = (longest_token + TABLE_CELL_HORIZONTAL_PADDING + TABLE_WORD_FIT_SLOP)
+                 .clamp(32.0, available_width * 0.22);
+             let ideal = (measure_text(&text, TABLE_FONT_SIZE, PdfFont::Helvetica)
+                 + TABLE_CELL_HORIZONTAL_PADDING)
+@@ -983,8 +1176,7 @@
+     let mut cells = Vec::new();
+     let mut height = 18.0_f32;
+     for (index, cell) in row.cells.iter().enumerate() {
+-        let width = col_widths.get(index).copied().unwrap_or(48.0)
+-            - TABLE_CELL_HORIZONTAL_PADDING;
++        let width = col_widths.get(index).copied().unwrap_or(48.0) - TABLE_CELL_HORIZONTAL_PADDING;
+         let lines = layout_cell(cell, width.max(16.0), fonts, header);
+         let content_height = lines.iter().map(table_line_height).sum::<f32>();
+         height = height.max(content_height + TABLE_CELL_VERTICAL_PADDING);
+@@ -1314,15 +1506,17 @@
+                 continue;
+             }
+             let token_width = measure_text(&token.text, token.size, token.font);
+-            let is_space = token.text.chars().all(|ch| ch.is_whitespace());
++            let is_space = token
++                .text
++                .chars()
++                .all(|ch| ch.is_whitespace() && ch != '\u{a0}');
+             if !is_space && token_width > max_width {
+                 if !current.runs.is_empty() {
+                     trim_trailing_spaces(&mut current);
+                     lines.push(std::mem::take(&mut current));
+                 }
+                 for fragment in split_run_to_width(&token, max_width) {
+-                    let fragment_width =
+-                        measure_text(&fragment.text, fragment.size, fragment.font);
++                    let fragment_width = measure_text(&fragment.text, fragment.size, fragment.font);
+                     if !current.runs.is_empty() && current.width + fragment_width > max_width {
+                         lines.push(std::mem::take(&mut current));
+                     }
+@@ -1410,7 +1604,7 @@
+             });
+             continue;
+         }
+-        if ch.is_whitespace() {
++        if ch.is_whitespace() && ch != '\u{a0}' {
+             flush(&mut out, &mut buffer, run);
+             out.push(StyledRun {
+                 text: ch.to_string(),
+@@ -1433,7 +1627,8 @@
+ }
+
+ fn trim_trailing_spaces(line: &mut LineLayout) {
+-    while matches!(line.runs.last(), Some(run) if run.text.chars().all(|ch| ch.is_whitespace())) {
++    while matches!(line.runs.last(), Some(run) if run.text.chars().all(|ch| ch.is_whitespace() && ch != '\u{a0}'))
++    {
+         if let Some(run) = line.runs.pop() {
+             line.width -= measure_text(&run.text, run.size, run.font);
+         }
+@@ -2265,3 +2460,41 @@
+         assert!(lines.iter().all(|line| line.width <= 96.01));
+     }
+ }
++
++#[cfg(test)]
++mod odf_box_tests {
++    use super::*;
++
++    #[test]
++    fn explicit_indentation_is_not_trimmed_by_wrapping() {
++        let run = StyledRun {
++            text: "\u{a0}\u{a0}\u{a0}\u{a0}code".into(),
++            font: PdfFont::Courier,
++            size: 10.0,
++            color: (0.0, 0.0, 0.0),
++            background: None,
++            underline: false,
++            link: None,
++        };
++        let lines = layout_runs(&[run], 100.0);
++        assert_eq!(lines.len(), 1);
++        assert_eq!(lines[0].width, 48.0);
++        assert!(lines[0].runs[0]
++            .text
++            .starts_with("\u{a0}\u{a0}\u{a0}\u{a0}"));
++    }
++
++    #[test]
++    fn odf_heading_keeps_source_font_and_spacing() {
++        let mut paragraph = Paragraph::default();
++        paragraph.style.source_spacing = true;
++        paragraph.text_style.font_size_pt = 13;
++        paragraph.style.margin_bottom_mm = 0;
++        let heading = Heading {
++            level: 1,
++            content: paragraph.clone(),
++        };
++        let styled = styled_heading_paragraph(&heading, 20.0);
++        assert_eq!(styled, paragraph);
++    }
++}

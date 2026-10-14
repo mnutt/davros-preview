@@ -433,3 +433,36 @@ package describing a million rows with 16,384 populated columns.
 Validation: `cargo test -p lo_core -p lo_calc --lib`, packaged ODF conversions,
 and the existing ODF corpus. These limits do not cover every decoder, layout
 algorithm, or the total cell count across multiple sheets.
+
+
+### Writer technical-document templates
+
+`lo_writer/src/import.rs` now reads decimal ODF outline rules, including start
+values, displayed ancestor levels and label prefixes/suffixes. Heading-only list
+wrappers are flattened so their outline labels do not acquire extra bullets.
+Counters reset below each new ancestor. Alphabetic/Roman outline formats and
+per-heading restart overrides remain unsupported.
+
+The importer preserves `text:s` spaces as nonbreaking spaces through wrapping,
+with a 10,000-space cap per element. It imports inherited paragraph backgrounds,
+solid borders, padding and point-precision margins instead of rounding all
+margins to whole millimeters. `lo_core/src/style.rs` stores these ODF-specific
+properties without changing non-ODF defaults. `lo_core/src/writer.rs` also retains
+each table cell edge independently; explicit `none` overrides the shorthand.
+
+`lo_writer/src/layout.rs` respects source heading sizes and spacing, uses the
+bundled Liberation families’ natural line-box metrics for ODF percentage line
+spacing, and accounts for padding in layout. It paints paragraph backgrounds and
+solid borders per page fragment. Adjacent identically styled bordered, shaded
+paragraphs with joining enabled share a box; their paragraph spacing contributes
+to line spacing. This is approximate for wrapped or mixed-size joined paragraphs.
+Table cells honor their paragraph alignment and individual edge borders.
+Non-solid border styles, inline text borders, rich footer styling, arbitrary
+font metrics and exact outline tab positioning remain incomplete.
+
+Regression coverage includes nested heading wrappers and counter resets,
+inherited boxes and precise margins, bounded explicit spaces, individual table
+edges, indentation after wrapping, source heading styles, and a packaged-binary
+synthetic template. The pinned public Writer example and the full ODF corpus
+provide visual and selectable-text comparisons. Keep these logical changes when
+rebasing the upstream patch; do not replace them with fixture-specific strings.

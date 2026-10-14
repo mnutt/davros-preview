@@ -149,6 +149,13 @@ def report(results, output):
 def checks(record, pdf):
     text = pdf.with_suffix('.txt').read_text()
     result = {}
+    if record['id'] == 'writer-template-example-odt':
+        compact = ''.join(text.split())
+        result['outline_numbering'] = all(s in compact for s in [
+            '1Introduction', '1.1Physicalvs.logicalmodel', '1.1.1CQL', '1.1.2CQLlogicalrepresentation'])
+        result['code_and_table_content'] = all(s in compact for s in [
+            'CREATETABLEpopulation', 'PRIMARYKEY(country_id,state,city)', '2598756', '3258489'])
+        result['single_page'] = text.count('\f') == 1
     if record['id'] == 'native-writer':
         result['nested_list_content'] = all(s in text for s in ['First paragraph', 'Second paragraph', 'Nested item'])
         result['page_headers'] = all(s in text for s in ['First page header', 'Later page header'])
