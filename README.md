@@ -9,8 +9,15 @@ The `davros-preview` executable supports these formats:
 | Input | Converter |
 | --- | --- |
 | DOC, DOCX | Office Oxide 0.1.13 (DOC → DOCX), docxide-pdf 0.17.1 |
-| XLS, XLSX, PPT, PPTX | Office Oxide 0.1.13 (XLS → XLSX, PPT → PPTX), office2pdf 0.8.1 |
-| ODT, ODS, ODP | Patched libreoffice-rs, revision `291b94a` |
+| XLS, XLSX, PPT, PPTX | Office Oxide 0.1.13 (XLS → XLSX, PPT → PPTX), Davros libreoffice-rs fork |
+| ODT, ODS, ODP | Davros libreoffice-rs fork, revision `16532b3` |
+
+XLS/XLSX and PPT/PPTX render through
+[mnutt/libreoffice-rs, davros-fixes](https://github.com/mnutt/libreoffice-rs/tree/davros-fixes),
+pinned to revision `16532b3f0ded4b2e05296d114e2eacd91827ed23` for reproducible builds.
+Office Oxide normalizes legacy DOC/XLS/PPT to DOCX/XLSX/PPTX first; DOC/DOCX
+continues to use docxide-pdf. The former `DAVROS_PREVIEW_XLSX_RENDERER` switch
+is no longer used.
 
 PDF text remains selectable. Microsoft spreadsheet pages widen to fit all columns at their
 natural size, while still paginating vertically. ODS uses source page geometry and
@@ -36,7 +43,8 @@ sudo apt-get install build-essential python3 patch fonts-liberation fonts-noto-c
 
 The default is one Cargo job to accommodate small build VMs. Set
 `CARGO_BUILD_JOBS` and `CARGO_TARGET_DIR` to override. `prepare.py` validates
-upstream archive checksums before extracting and applying `patches/`; Cargo uses
+source archive checksums before extracting and applying any declared patches; the
+libreoffice-rs fork is pinned directly without a local patch. Cargo uses
 the checked-in lockfile. Dependencies are downloaded on the first build.
 
 [PATCHES.md](PATCHES.md) describes each logical dependency change, its regression
@@ -46,6 +54,24 @@ coverage and limitations, and how to reassess it when upgrading upstream crates.
 `davros-preview-v0.3.4-linux-amd64.tar.gz` and its `.sha256` file. The archive
 contains a single `native-preview/` directory, matching Davros's existing output
 layout. Build dependencies and test executables are not included.
+
+Release builds optimize for size (`opt-level = "z"`, full LTO, one codegen unit,
+stripped symbols, and abort-on-panic). Measured locally on Linux amd64 with Rust
+1.98.0 and the pinned fork on 2026-10-15:
+
+| Artifact | Size |
+| --- | ---: |
+| Executable | 8,398,472 bytes (8.01 MiB) |
+| Runtime bundle, including fonts and licenses | 13.19 MiB unpacked |
+| Runtime `.tar.gz` | 6.03 MiB |
+
+The previously built executable with office2pdf was 39.26 MiB. After removing
+it, the previous `opt-level = "s"` / thin-LTO settings produced 10.15 MiB;
+`"z"` / full LTO reduced that to 7.90 MiB at revision `327fa24`. The table above
+reflects the current pin, including its additional presentation support. These
+are local measurements, not cross-platform guarantees or a renderer throughput
+benchmark. The executable
+still needs the bundled fonts and host system libraries.
 
 Release CI runs on Ubuntu 22.04, using glibc 2.35 as its compatibility baseline
 for Davros's Debian 13 package. Locally built binaries inherit the build host's
@@ -114,7 +140,7 @@ Generated OOXML passes the same size and decompression checks as direct input.
 No external office suite is required at runtime.
 
 Limits: 32 MiB input (including intermediate OOXML), 10,000 ZIP entries, 32 MiB
-per decompressed entry, 128 MiB total decompression, 128 MiB PDF output, and
+per decompressed entry, 128 MiB total decompression, 256 MiB PDF output, and
 4 GiB address space when the kernel permits the resource limit. Input and ZIP
 limits are enforced by the application. PDF size is checked before publication
 even without resource limits; existing outputs (including links) are never

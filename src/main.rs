@@ -43,15 +43,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .as_deref()
     {
         Some("docx") => docxide_pdf::render_docx_to_pdf(input.path())?,
-        Some("xlsx" | "pptx") => {
-            let options = office2pdf::config::ConvertOptions {
-                last_resort_font_family: Some("Liberation Sans".into()),
-                ..Default::default()
-            };
-            let result = office2pdf::convert_with_options(input.path(), &options)?;
-            result.pdf
-        }
-        Some(extension @ ("odt" | "ods" | "odp")) => {
+        Some(extension @ ("xlsx" | "pptx" | "odt" | "ods" | "odp")) => {
             let mut bytes = Vec::new();
             std::fs::File::open(input.path())?
                 .take(32 * 1024 * 1024 + 1)
@@ -60,6 +52,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 return Err("Document exceeds 32 MiB".into());
             }
             match extension {
+                "xlsx" => lo_calc::pdf::to_pdf_preview(&lo_calc::from_xlsx_bytes("", &bytes)?),
+                "pptx" => lo_impress::to_pdf(&lo_impress::from_pptx_bytes("", &bytes)?),
                 "odt" => lo_writer::try_to_pdf(&lo_writer::from_odt_bytes("", &bytes)?)?,
                 "ods" => lo_calc::to_pdf(&lo_calc::from_ods_bytes("", &bytes)?),
                 "odp" => lo_impress::to_pdf(&lo_impress::from_odp_bytes("", &bytes)?),

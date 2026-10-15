@@ -348,7 +348,7 @@ pub fn enter(input: &Path, output: &Path) -> Result<SecurityReport, Box<dyn std:
         (
             "output_file_size_limit",
             libc::RLIMIT_FSIZE,
-            128_u64 * 1024 * 1024,
+            crate::MAX_PDF_BYTES as u64,
         ),
         ("core_file_size_limit", libc::RLIMIT_CORE, 0),
     ] {

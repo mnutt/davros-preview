@@ -9,4 +9,5 @@ cargo build --release --locked --example sandbox-check -j "${CARGO_BUILD_JOBS:-1
 python3 test-sandbox.py "$CARGO_TARGET_DIR/release/examples/sandbox-check" output/native-preview/davros-preview
 python3 tests/test-prepare.py
 python3 tests/test-conversion.py
+python3 tests/test-active-content.py
 python3 tests/corpus/test_runner.py

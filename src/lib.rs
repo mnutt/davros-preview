@@ -7,6 +7,9 @@ pub mod legacy;
 
 use std::{fs::File, io::Read, path::Path};
 
+/// Maximum PDF output size, shared with the renderer process file limit.
+pub const MAX_PDF_BYTES: usize = 256 * 1024 * 1024;
+
 /// Bound input size before parsing. Process hardening is applied by sandbox::enter.
 fn bounded_input(input: &Path) -> Result<File, Box<dyn std::error::Error>> {
     let file = File::open(input)?;
@@ -41,8 +44,8 @@ pub fn validate(input: &Path) -> Result<(), Box<dyn std::error::Error>> {
 /// output symlink/hardlink. The caller owns the private scratch directory.
 pub fn write_pdf(output: &Path, bytes: &[u8]) -> Result<(), Box<dyn std::error::Error>> {
     use std::io::Write;
-    if bytes.len() > 128 * 1024 * 1024 {
-        return Err("PDF exceeds 128 MiB".into());
+    if bytes.len() > MAX_PDF_BYTES {
+        return Err("PDF exceeds 256 MiB".into());
     }
     if !bytes.starts_with(b"%PDF-") {
         return Err("Converter did not produce a PDF".into());
@@ -72,7 +75,12 @@ mod security_tests {
         assert_eq!(std::fs::read(&secret).unwrap(), b"secret");
         std::fs::remove_file(&output).unwrap();
         assert!(write_pdf(&output, b"invalid").is_err());
-        assert!(write_pdf(&output, &vec![0; 128 * 1024 * 1024 + 1]).is_err());
+        assert_eq!(
+            write_pdf(&output, &vec![0; MAX_PDF_BYTES + 1])
+                .unwrap_err()
+                .to_string(),
+            "PDF exceeds 256 MiB"
+        );
         assert!(!output.exists());
         write_pdf(&output, b"%PDF-test").unwrap();
         assert_eq!(std::fs::read(&output).unwrap(), b"%PDF-test");

@@ -44,3 +44,24 @@ with tempfile.TemporaryDirectory(prefix='davros-prepare-test-') as temporary:
     assert failed.returncode and b'Checksum mismatch' in failed.stderr
     assert (dest / 'src/lib.rs').read_text() == 'patched\n'
 print('PASS: preparation verifies archives and preserves usable source after failures')
+
+with tempfile.TemporaryDirectory(prefix='davros-fork-pin-test-') as temporary:
+    root = Path(temporary)
+    cache = root / 'vendor/.archives'
+    cache.mkdir(parents=True)
+    archive = cache / 'fork-revision.tar.gz'
+    with tarfile.open(archive, 'w:gz') as tar:
+        data = b'[workspace]\n'
+        info = tarfile.TarInfo('fork-root/Cargo.toml'); info.size = len(data)
+        tar.addfile(info, io.BytesIO(data))
+    record = dict(name='fork-revision', url='https://invalid.example/not-fetched',
+                  archive_root='fork-root', sha256=hashlib.sha256(archive.read_bytes()).hexdigest(), patch=False)
+    (root/'sources.json').write_text(json.dumps([record]))
+    subprocess.run([sys.executable, prepare, root], check=True, capture_output=True)
+    assert (root/'vendor/fork-revision/Cargo.toml').read_bytes() == data
+    record['sha256'] = '0' * 64
+    (root/'sources.json').write_text(json.dumps([record]))
+    failed = subprocess.run([sys.executable, prepare, root], capture_output=True)
+    assert failed.returncode and b'Checksum mismatch' in failed.stderr
+    assert (root/'vendor/fork-revision/Cargo.toml').read_bytes() == data
+print('PASS: unpatched fork pins verify archives and invalidate stamps when source pins change')

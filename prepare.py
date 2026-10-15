@@ -18,7 +18,8 @@ vendor.mkdir(exist_ok=True)
 for source in json.loads((root / 'sources.json').read_text()):
     name = source['name']
     patch = root / 'patches' / (name + '.patch')
-    revision = hashlib.sha256(patch.read_bytes()).hexdigest()
+    patch_bytes = b'' if source.get('patch') is False else patch.read_bytes()
+    revision = hashlib.sha256(json.dumps(source, sort_keys=True).encode() + b'\0' + patch_bytes).hexdigest()
     dest = vendor / name
     stamp = dest / '.davros-patch'
     if stamp.exists() and stamp.read_text() == revision:
@@ -49,7 +50,8 @@ for source in json.loads((root / 'sources.json').read_text()):
         # One upstream package uses CRLF; the reviewed diffs use LF.
         for file in [*unpacked.rglob('*.rs'), unpacked / 'Cargo.toml']:
             file.write_text(file.read_text())
-        subprocess.run(['patch', '-p1', '--batch', '-i', str(patch)], cwd=unpacked, check=True)
+        if source.get('patch') is not False:
+            subprocess.run(['patch', '-p1', '--batch', '-i', str(patch)], cwd=unpacked, check=True)
         if dest.exists():
             shutil.rmtree(dest)
         unpacked.rename(dest)

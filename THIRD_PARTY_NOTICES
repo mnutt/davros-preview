@@ -4,14 +4,6 @@ docxide-pdf 0.17.1: Apache-2.0 (locally modified)
 https://github.com/sverrejb/docxide-pdf
 Changes restrict font discovery and substitute the three Liberation families.
 
-office2pdf 0.8.1: Apache-2.0 (locally modified)
-https://github.com/developer0hye/office2pdf
-Changes remove DOCX dispatch and embedded fallback font packs, limit image codecs, and widen spreadsheet preview pages to keep columns together.
-
-umya-spreadsheet 2.3.3: MIT (locally modified)
-https://github.com/MathNya/umya-spreadsheet
-Changes fix fractional padding, percentage precision, and prefixed SpreadsheetML parsing.
-
 office_oxide 0.1.13: MIT OR Apache-2.0 (locally modified)
 https://github.com/yfedoseev/office_oxide
 Changes preserve explicit XLS column widths and row heights (including blank
@@ -22,10 +14,15 @@ their bodies and write automatic note-body marks in DOCX; classify DOC comments
 correctly; avoid inferred headings for structured DOC paragraphs; preserve natural
 PNG proportions for fallback legacy images; and avoid invented PPT slide titles.
 
-libreoffice-rs: MIT (locally modified)
+libreoffice-rs: MIT; lo_impress also includes Apache-2.0 and MPL-2.0 material
 https://github.com/clark-labs-inc/libreoffice-rs
-Pinned revision: 291b94ae0083ccb2e5f2cf49b46626e41eedf53d
-Used for ODT, ODS and ODP previews only. Changes preserve ODF styles, page
+Davros fork: https://github.com/mnutt/libreoffice-rs (16532b3f0ded4b2e05296d114e2eacd91827ed23)
+Branch: davros-fixes
+lo_impress preset geometry derives from Apache POI (Apache-2.0); its hatch
+mapping derives from LibreOffice (MPL-2.0). Corresponding license texts, notices,
+provenance, and the MPL-covered hatch source are included under licenses/.
+The fork ignores foreign-namespace XLSX sheet elements; no local patch is applied.
+Used for XLS/XLSX, PPT/PPTX, ODT, ODS and ODP previews. Changes preserve ODF styles, page
 geometry, tables, cached cell formats, headers/footers, images and transparency,
 charts, master artwork, lists and simple transforms; add bounded SVG rendering;
 use the bundled font directory for Unicode PDF text; interpret bounded enhanced

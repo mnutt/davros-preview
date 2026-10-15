@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Copy dependency notices next to the binaries (no compiler/source in the package)."""
+"""Copy dependency notices and the MPL-covered hatch source into the bundle."""
 import os
 from pathlib import Path
 import shutil
@@ -15,7 +15,7 @@ notices = []
 licenses = {}
 for package in tomllib.loads((root / 'Cargo.lock').read_text())['package']:
     name = f"{package['name']}-{package['version']}"
-    odf_workspace = root / 'vendor/libreoffice-rs-291b94a'
+    odf_workspace = root / 'vendor/libreoffice-rs-16532b3'
     sources = [root / 'vendor' / name,
                odf_workspace / 'crates' / package['name'],
                *(cargo / 'registry/src').glob('*/' + name)]
@@ -35,12 +35,20 @@ for package in tomllib.loads((root / 'Cargo.lock').read_text())['package']:
         if file.is_file() and file.name.upper().startswith(('LICENSE', 'COPYING', 'NOTICE')):
             content = file.read_text(errors='replace').strip()
             licenses.setdefault(content, []).append(f'{name}/{file.name}')
+# lo_impress ships third-party preset geometry and an MPL-licensed hatch table.
+# Their notices are nested under data/, outside Cargo's usual license locations.
+impress = odf_workspace / 'crates/lo_impress'
+for name in ['APACHE-POI-LICENSE', 'APACHE-POI-NOTICE', 'LIBREOFFICE-MPL-2.0']:
+    file = impress / 'data' / name
+    licenses.setdefault(file.read_text().strip(), []).append(f'lo_impress/data/{name}')
+for name in ['hatch-source.json', 'preset-shapes-source.json']:
+    shutil.copyfile(impress / 'data' / name, out / ('lo_impress-' + name))
+# Include the complete small MPL-covered source alongside its license.
+shutil.copyfile(impress / 'src/pptx_pattern.rs', out / 'lo_impress-pptx_pattern.rs')
 (out / 'DEPENDENCIES.txt').write_text('\n'.join(notices) + '\n')
 (out / 'LICENSES.txt').write_text('\n\n'.join(
     '\n'.join(names) + '\n\n' + content for content, names in licenses.items()
 ) + '\n')
-# office2pdf declares Apache-2.0 but omits its license file from the published crate.
-shutil.copyfile(root / 'vendor/docxide-pdf-0.17.1/LICENSE', out / 'Apache-2.0.txt')
 font_license = next((p for p in [
     Path('/usr/share/doc/fonts-liberation/copyright'),
     Path('/usr/share/licenses/ttf-liberation/LICENSE'),

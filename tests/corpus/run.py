@@ -75,7 +75,7 @@ def fetch(manifest):
 
 def limits():
     resource.setrlimit(resource.RLIMIT_AS, (4 * 1024**3,) * 2)
-    resource.setrlimit(resource.RLIMIT_FSIZE, (128 * 1024**2,) * 2)
+    resource.setrlimit(resource.RLIMIT_FSIZE, (256 * 1024**2,) * 2)
     resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
 
 

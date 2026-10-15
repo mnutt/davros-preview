@@ -8,21 +8,17 @@ publish = false
 office_oxide = { path = "vendor/office_oxide-0.1.13", default-features = false }
 tempfile = "3"
 docxide-pdf = { path = "vendor/docxide-pdf-0.17.1", default-features = false }
-office2pdf = { path = "vendor/office2pdf-0.8.1", default-features = false }
 zip = { version = "0.6", default-features = false, features = ["deflate"] }
 libc = "0.2"
 serde_json = "1"
 
-lo_writer = { path = "vendor/libreoffice-rs-291b94a/crates/lo_writer", default-features = false }
-lo_calc = { path = "vendor/libreoffice-rs-291b94a/crates/lo_calc", default-features = false }
-lo_impress = { path = "vendor/libreoffice-rs-291b94a/crates/lo_impress", default-features = false, features = ["svg"] }
-
-[patch.crates-io]
-umya-spreadsheet = { path = "vendor/umya-spreadsheet-2.3.3" }
+lo_writer = { path = "vendor/libreoffice-rs-16532b3/crates/lo_writer", default-features = false }
+lo_calc = { path = "vendor/libreoffice-rs-16532b3/crates/lo_calc", default-features = false }
+lo_impress = { path = "vendor/libreoffice-rs-16532b3/crates/lo_impress", default-features = false, features = ["svg"] }
 
 [profile.release]
-opt-level = "s"
-lto = "thin"
+opt-level = "z"
+lto = "fat"
 codegen-units = 1
 strip = "symbols"
 panic = "abort"

@@ -9,7 +9,7 @@ that the changes are still correct or needed.
 Exact upstream archive versions and SHA-256 checksums live in
 [sources.json](sources.json). [prepare.py](prepare.py) verifies the archive,
 normalizes Rust sources and `Cargo.toml` to LF, and applies each diff with
-`patch -p1 --batch`. A patch-hash stamp controls reuse of the extracted tree.
+`patch -p1 --batch`. A source-and-patch hash stamp controls reuse of the extracted tree.
 Changing a patch causes that crate's `vendor/` directory to be replaced, so save
 any vendor edits in the patch before preparing again. The stamp is not a check
 of the current vendor file contents.
@@ -52,92 +52,6 @@ The CLI can now enforce its output limit and publish through the same exclusive
 staging-file path as other formats. Existing upstream file-writing APIs remain
 available. Validate packaged DOC/DOCX output and unavailable-Landlock symlink
 refusal (`test-sandbox.py`).
-
-## office2pdf 0.8.1
-
-Patch: [office2pdf-0.8.1.patch](patches/office2pdf-0.8.1.patch).
-
-### P1. Use external Liberation fonts instead of embedded fonts
-
-`src/lib.rs` replaces the bundled-font module with the same callable interface,
-empty embedded font slices, and Liberation family names. The runtime supplies
-the external fonts. This is a packaging/font policy change; preserve it alongside
-the wrapper's font configuration when upgrading.
-
-Validation: packaged XLSX/PPTX conversions and inspection of the runtime bundle.
-The smoke tests do not assert the binary's complete embedded-font contents.
-
-### P2. Keep DOCX on the docxide rendering path
-
-`src/lib_pipeline.rs` returns `UnsupportedFormat` for office2pdf's DOCX branch.
-Davros dispatches DOCX (including normalized DOC) to docxide-pdf. This makes the
-chosen renderer explicit at the library boundary; it does not remove every DOCX
-parser source file from office2pdf.
-
-Validation: packaged DOC/DOCX conversion tests exercise the intended dispatch.
-There is no separate test invoking this office2pdf error branch directly.
-
-### P3. Limit enabled image codecs
-
-`Cargo.toml` disables the `image` dependency's default features and enables PNG,
-JPEG, GIF, BMP, TIFF, WebP and ICO explicitly. This controls the decoder dependency
-set used by our build. Reassess the feature list against upstream dependencies
-on upgrade; Cargo feature unification can enable additional features elsewhere.
-
-Validation: locked release build and image-bearing fixtures. The suite does not
-cover each enabled codec individually.
-
-### P4. Keep spreadsheet columns together at natural size
-
-`src/parser/xlsx_pagination.rs::split_sheet_page_by_width` ignores the input print
-scaling/fit settings, widens the page to the sum of column widths plus margins,
-and adds one point of rounding slack. Existing vertical pagination remains.
-This is intentional web-preview behavior, so matching an upstream print renderer
-is not sufficient reason to remove it.
-
-Validation: `wide.xlsx` in `tests/test-conversion.py` must have both horizontal
-extremes on its first page, a width over 1,500 points, and later rows on subsequent
-pages. Very wide sheets can produce very wide PDF pages by design.
-
-## umya-spreadsheet 2.3.3
-
-Patch: [umya-spreadsheet-2.3.3.patch](patches/umya-spreadsheet-2.3.3.patch).
-
-### U1. Pad fractional digits without integer multiplication
-
-`src/helper/number_format/number_formater.rs` appends the missing zero digits
-when a fractional value is shorter than the format's decimal part. Previously it
-multiplied a parsed integer by an incorrect power of ten, producing values such
-as `$12.500` for `$12.50` and introducing integer-overflow risk. This fixes that
-padding branch, not the complete number-format implementation.
-
-Validation: XLS/XLSX fixtures assert `$12.50` and reject `$12.500` in extracted PDF
-text in `tests/test-conversion.py`.
-
-### U2. Round percentages to the requested precision
-
-`src/helper/number_format/percentage_formater.rs` rounds after scaling by both
-100 and the requested decimal precision, then scales back. Previously 12.5%
-could become 13.0% because rounding happened at whole-percent precision.
-
-Validation: XLS/XLSX fixtures assert `12.5%` and reject `13.0%` in the same test.
-
-### U3. Accept namespace-prefixed SpreadsheetML elements
-
-`src/reader/driver.rs` adds a streaming adapter using `quick_xml::NsReader`.
-It resolves scoped/rebound prefixes and normalizes element names only when their
-namespace URI is the transitional SpreadsheetML main namespace. Attributes and
-other namespaces are retained; this is not arbitrary prefix stripping or general
-Strict OOXML support.
-
-The workbook, worksheet (both read paths), styles, shared strings, table, comment
-and pivot-table readers in `src/reader/xlsx/` use this adapter. These reader
-switches are all part of the same fix and should be reviewed together on upgrade.
-
-Validation: `prefixed-x.xlsx` and `prefixed-spreadsheet.xlsx` must extract exactly
-the same PDF text as `basic.xlsx`; the wide fixture also checks shared-string
-content. See `tests/fixture-source.cjs` for fixture construction. This does not
-provide dedicated coverage for every adapted reader.
 
 ## office_oxide 0.1.13
 
@@ -357,11 +271,17 @@ harness are repository code, not additional dependency patches. See
 [src/lib.rs](src/lib.rs) and [tests/corpus/README.md](tests/corpus/README.md).
 
 
-## libreoffice-rs ODF renderer
+## libreoffice-rs renderer
 
-The production ODT/ODS/ODP backend uses the cumulative
-[fidelity patch](patches/libreoffice-rs-291b94a.patch), which targets
-revision `291b94ae0083ccb2e5f2cf49b46626e41eedf53d`. Its logical-change inventory,
+The ODT/ODS/ODP, XLS/XLSX and PPT/PPTX renderers use the checksum-pinned
+Davros fork at `16532b3f0ded4b2e05296d114e2eacd91827ed23`. Its `davros-fixes`
+branch contains the imported fixes as logical commits plus the XLSX and PPTX corpus work;
+The fork includes the foreign-namespace XLSX sheet fix; no local patch is applied.
+The prefixed-XLSX regression fixtures verify the upstream fix.
+The historical
+[fidelity patch](patches/libreoffice-rs-291b94a.patch), targeting upstream
+`291b94ae0083ccb2e5f2cf49b46626e41eedf53d`, remains for provenance and the old
+evaluation symlink. Its logical-change inventory,
 upstream file mapping, reproduction steps, validation and limitations are in the
 [ODF evaluation notes](tests/corpus/README.md#changes-in-fidelitypatch), including
 the later native-corpus rounds. Do not infer compatibility with a newer revision

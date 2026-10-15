@@ -58,7 +58,7 @@ Reference processes use a fresh profile, highest macro-security setting, no
 network, read-only system/input mounts, a private writable work directory, and
 the bundle's Liberation font configuration. Bubblewrap must work; the runner
 fails its preflight rather than falling back to an unrestricted reference tool.
-Each stage has 4 GiB address-space and 128 MiB per-file limits. Timeout handling
+Each stage has 4 GiB address-space and 256 MiB per-file limits. Timeout handling
 kills the process group. Reference-tool failures are reported separately.
 
 `results.json` records status, elapsed time, memory, binary/manifest/runner/font

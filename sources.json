@@ -1,13 +1,5 @@
 [
   {
-    "name": "office2pdf-0.8.1",
-    "sha256": "b816a251df46819b282610723877ec6c5fa9a97a953c2068f83367e7d804d512"
-  },
-  {
-    "name": "umya-spreadsheet-2.3.3",
-    "sha256": "408c7e039c96ec1d517a1111ade7fadab889f32c096dac691a1e3b8018c3e39a"
-  },
-  {
     "name": "docxide-pdf-0.17.1",
     "sha256": "329625e49ad3da18c400f45b126cbb0b1d8f0e5e68c21f32844ba8f575448e29"
   },
@@ -16,9 +8,10 @@
     "sha256": "22582556784e5c9005e12e2c2e78c2959674ca082edf806d939fff4ffceca9de"
   },
   {
-    "name": "libreoffice-rs-291b94a",
-    "url": "https://codeload.github.com/clark-labs-inc/libreoffice-rs/tar.gz/291b94ae0083ccb2e5f2cf49b46626e41eedf53d",
-    "archive_root": "libreoffice-rs-291b94ae0083ccb2e5f2cf49b46626e41eedf53d",
-    "sha256": "6a0f9e3334cf2908f9d483f2d69954a6de25e10c83adb2bb7f5cc907345f0c28"
+    "name": "libreoffice-rs-16532b3",
+    "url": "https://codeload.github.com/mnutt/libreoffice-rs/tar.gz/16532b3f0ded4b2e05296d114e2eacd91827ed23",
+    "archive_root": "libreoffice-rs-16532b3f0ded4b2e05296d114e2eacd91827ed23",
+    "sha256": "369fc478293afd65160d676a4a5b335d810f2b0401c47cb110c75c61d65142e3",
+    "patch": false
   }
 ]

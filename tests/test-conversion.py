@@ -192,7 +192,7 @@ with tempfile.TemporaryDirectory(prefix='davros-preview-tests-') as tmp:
         assert b'LOTOFU+MissingGlyph' in data
         # All three CIDs draw the same nonzero square glyph, while ToUnicode
         # preserves the distinct original characters (including a surrogate pair).
-        mapping_ref = re.search(rb'/CIDToGIDMap (\d+) 0 R', data)
+        mapping_ref = re.search(rb'/BaseFont /LOTOFU\+MissingGlyph [^\r\n]*?/CIDToGIDMap (\d+) 0 R', data)
         assert mapping_ref, ext
         mapping = re.search(rb'\b' + mapping_ref[1] +
                             rb' 0 obj\s*<< /Length 8 >>\s*stream\n(.{8})', data, re.S)

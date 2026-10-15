@@ -12,6 +12,8 @@ jobs:
     # glibc 2.35 baseline, compatible with Davros's Debian 13 Sandstorm image.
     runs-on: ubuntu-22.04
     timeout-minutes: 45
+    env:
+      CARGO_BUILD_JOBS: '2'
     steps:
       - uses: actions/checkout@v4
       - name: Install dependencies
