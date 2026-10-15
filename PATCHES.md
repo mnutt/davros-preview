@@ -275,17 +275,14 @@ harness are repository code, not additional dependency patches. See
 
 The ODT/ODS/ODP, XLS/XLSX and PPT/PPTX renderers use the checksum-pinned
 Davros fork at `16532b3f0ded4b2e05296d114e2eacd91827ed23`. Its `davros-fixes`
-branch contains the imported fixes as logical commits plus the XLSX and PPTX corpus work;
-The fork includes the foreign-namespace XLSX sheet fix; no local patch is applied.
-The prefixed-XLSX regression fixtures verify the upstream fix.
-The historical
-[fidelity patch](patches/libreoffice-rs-291b94a.patch), targeting upstream
-`291b94ae0083ccb2e5f2cf49b46626e41eedf53d`, remains for provenance and the old
-evaluation symlink. Its logical-change inventory,
-upstream file mapping, reproduction steps, validation and limitations are in the
-[ODF evaluation notes](tests/corpus/README.md#changes-in-fidelitypatch), including
-the later native-corpus rounds. Do not infer compatibility with a newer revision
-from patch application alone; rerun the native ODF and original control corpus.
+branch contains the imported fixes as logical commits plus the XLSX and PPTX
+corpus work. No local patch is applied. The prefixed-XLSX regression fixtures
+verify the fork's foreign-namespace sheet fix.
+
+The inventory below describes changes maintained in the fork. Reproduction
+steps, validation and limitations are in the
+[ODF evaluation notes](tests/corpus/README.md#odf-preview-evaluation). Rerun the
+native ODF and original control corpus when updating the pinned revision.
 
 Production integration adds bundled Unicode font discovery through
 `DAVROS_PREVIEW_FONTS` (`lo_core/src/unicode_font.rs`). It takes precedence over
@@ -297,8 +294,7 @@ across multiple slides. Complex enhanced geometry and mixed-run typography remai
 open fidelity work.
 
 `sources.json` pins the source archive checksum; `prepare.py` stages extraction
-and patch application before replacing the vendor tree. The old evaluation patch
-path is a symlink to this canonical production patch. `test.sh` runs the ODF library
+before replacing the vendor tree. `test.sh` runs the ODF library
 tests and generated ODF controls through the packaged binary, alongside all
 existing Office and sandbox checks. Runtime dependency notices include inherited
 workspace metadata and the upstream MIT license.
@@ -394,7 +390,7 @@ inherited boxes and precise margins, bounded explicit spaces, individual table
 edges, indentation after wrapping, source heading styles, and a packaged-binary
 synthetic template. The pinned public Writer example and the full ODF corpus
 provide visual and selectable-text comparisons. Keep these logical changes when
-rebasing the upstream patch; do not replace them with fixture-specific strings.
+updating the fork; do not replace them with fixture-specific strings.
 
 ### Writer cover pages, lists, and code-listing pagination
 

@@ -272,7 +272,8 @@ def main():
     metadata = dict(created_utc=datetime.now(timezone.utc).isoformat(),
                     scope='ODF only' if args.odf_only else 'all formats',
                     native_generator_sha256=corpus.digest(Path(native_fixtures.__file__)),
-                    upstream_revision='291b94ae0083ccb2e5f2cf49b46626e41eedf53d',
+                    configured_renderer_source=next(source for source in json.loads((ROOT / 'sources.json').read_text())
+                                                    if source['name'].startswith('libreoffice-rs-')),
                     git_revision=subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
                     candidate_sha256=corpus.digest(candidate), candidate_bytes=candidate.stat().st_size,
                     davros_sha256=corpus.digest(bundle / 'davros-preview'), davros_bytes=(bundle / 'davros-preview').stat().st_size,

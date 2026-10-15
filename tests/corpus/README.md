@@ -198,12 +198,12 @@ Evaluated runtime SHA-256: `4f2e232c8e5fac151bf15cfcabe9f00d0421bd7110d2ba314139
 
 ## ODF preview evaluation
 
-The production converter supports ODT, ODS and ODP through the pinned, patched
-`libreoffice-rs` backend. Office formats retain their existing converters.
-Upstream revisions and checksums are in `sources.json`; the maintained patch is
-`patches/libreoffice-rs-291b94a.patch`. See [PATCHES.md](../../PATCHES.md) for its
-logical changes and limitations, and [SECURITY.md](../../SECURITY.md) for security
-limits and validation.
+The production converter supports ODT, ODS, ODP, XLSX and PPTX through the
+pinned `mnutt/libreoffice-rs` fork, with no local patch. DOCX uses docxide-pdf;
+Office Oxide normalizes legacy DOC/XLS/PPT before rendering. The fork revision
+and archive checksum are in [sources.json](../../sources.json). See
+[PATCHES.md](../../PATCHES.md) for the renderer's maintained changes and
+limitations, and [SECURITY.md](../../SECURITY.md) for security limits and validation.
 
 `odf/` contains the maintained comparison runner, synthetic fixture generator,
 pinned native corpus manifest, and compact report exporter. The native manifest
