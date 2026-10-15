@@ -201,7 +201,7 @@ Evaluated runtime SHA-256: `4f2e232c8e5fac151bf15cfcabe9f00d0421bd7110d2ba314139
 The production converter supports ODT, ODS, ODP, XLSX and PPTX through the
 pinned `mnutt/libreoffice-rs` fork, with no local patch. DOCX uses docxide-pdf;
 Office Oxide normalizes legacy DOC/XLS/PPT before rendering. The fork revision
-and archive checksum are in [sources.json](../../sources.json). See
+is pinned in [Cargo.toml](../../Cargo.toml) and recorded in `Cargo.lock`. See
 [PATCHES.md](../../PATCHES.md) for the renderer's maintained changes and
 limitations, and [SECURITY.md](../../SECURITY.md) for security limits and validation.
 

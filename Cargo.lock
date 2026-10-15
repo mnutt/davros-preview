@@ -589,6 +589,7 @@ checksum = "32a66949e030da00e8c7d4434b251670a91556f4144941d37452769c25d58a53"
 [[package]]
 name = "lo_calc"
 version = "0.5.3"
+source = "git+https://github.com/mnutt/libreoffice-rs?rev=16532b3f0ded4b2e05296d114e2eacd91827ed23#16532b3f0ded4b2e05296d114e2eacd91827ed23"
 dependencies = [
  "lo_core",
  "lo_odf",
@@ -598,6 +599,7 @@ dependencies = [
 [[package]]
 name = "lo_core"
 version = "0.5.5"
+source = "git+https://github.com/mnutt/libreoffice-rs?rev=16532b3f0ded4b2e05296d114e2eacd91827ed23#16532b3f0ded4b2e05296d114e2eacd91827ed23"
 dependencies = [
  "fontdb",
  "image",
@@ -608,6 +610,7 @@ dependencies = [
 [[package]]
 name = "lo_impress"
 version = "0.5.3"
+source = "git+https://github.com/mnutt/libreoffice-rs?rev=16532b3f0ded4b2e05296d114e2eacd91827ed23#16532b3f0ded4b2e05296d114e2eacd91827ed23"
 dependencies = [
  "lo_core",
  "lo_odf",
@@ -618,6 +621,7 @@ dependencies = [
 [[package]]
 name = "lo_math"
 version = "0.5.3"
+source = "git+https://github.com/mnutt/libreoffice-rs?rev=16532b3f0ded4b2e05296d114e2eacd91827ed23#16532b3f0ded4b2e05296d114e2eacd91827ed23"
 dependencies = [
  "lo_core",
  "lo_zip",
@@ -626,6 +630,7 @@ dependencies = [
 [[package]]
 name = "lo_odf"
 version = "0.5.3"
+source = "git+https://github.com/mnutt/libreoffice-rs?rev=16532b3f0ded4b2e05296d114e2eacd91827ed23#16532b3f0ded4b2e05296d114e2eacd91827ed23"
 dependencies = [
  "lo_core",
  "lo_math",
@@ -635,6 +640,7 @@ dependencies = [
 [[package]]
 name = "lo_writer"
 version = "0.5.6"
+source = "git+https://github.com/mnutt/libreoffice-rs?rev=16532b3f0ded4b2e05296d114e2eacd91827ed23#16532b3f0ded4b2e05296d114e2eacd91827ed23"
 dependencies = [
  "lo_core",
  "lo_odf",
@@ -645,6 +651,7 @@ dependencies = [
 [[package]]
 name = "lo_zip"
 version = "0.5.3"
+source = "git+https://github.com/mnutt/libreoffice-rs?rev=16532b3f0ded4b2e05296d114e2eacd91827ed23#16532b3f0ded4b2e05296d114e2eacd91827ed23"
 dependencies = [
  "lo_core",
 ]

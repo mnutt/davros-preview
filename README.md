@@ -44,7 +44,8 @@ sudo apt-get install build-essential python3 patch fonts-liberation fonts-noto-c
 The default is one Cargo job to accommodate small build VMs. Set
 `CARGO_BUILD_JOBS` and `CARGO_TARGET_DIR` to override. `prepare.py` validates
 source archive checksums before extracting and applying any declared patches; the
-libreoffice-rs fork is pinned directly without a local patch. Cargo uses
+libreoffice-rs fork is a Cargo Git dependency pinned to a commit, without a local
+patch or a copy in `vendor/`. Cargo uses
 the checked-in lockfile. Dependencies are downloaded on the first build.
 
 [PATCHES.md](PATCHES.md) describes each logical dependency change, its regression
@@ -196,11 +197,10 @@ for findings. A successful conversion is not a fidelity pass.
 ## OpenDocument previews
 
 ODT, ODS and ODP run directly in the same sandboxed binary, with no LibreOffice
-installation or intermediate Office conversion. The renderer is checksum-pinned
-and patched through the normal build. Microsoft Office inputs retain their
-existing converters. The local integrated executable is 38.95 MiB, about
-648 KiB larger than the preceding Office-only build; fonts are separate in the
-runtime bundle.
+installation or intermediate Office conversion. The renderer uses the commit-pinned
+libreoffice-rs fork, which also renders XLSX and PPTX. DOCX uses docxide-pdf,
+and Office Oxide normalizes legacy DOC/XLS/PPT before rendering. Fonts are
+separate in the runtime bundle.
 
 The ODF regression corpus includes 30 documents: 18 native LibreOffice QA files,
 three directly authored controls, and nine exported Office controls. The standard

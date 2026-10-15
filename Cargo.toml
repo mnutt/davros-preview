@@ -12,9 +12,9 @@ zip = { version = "0.6", default-features = false, features = ["deflate"] }
 libc = "0.2"
 serde_json = "1"
 
-lo_writer = { path = "vendor/libreoffice-rs-16532b3/crates/lo_writer", default-features = false }
-lo_calc = { path = "vendor/libreoffice-rs-16532b3/crates/lo_calc", default-features = false }
-lo_impress = { path = "vendor/libreoffice-rs-16532b3/crates/lo_impress", default-features = false, features = ["svg"] }
+lo_writer = { git = "https://github.com/mnutt/libreoffice-rs", rev = "16532b3f0ded4b2e05296d114e2eacd91827ed23", default-features = false }
+lo_calc = { git = "https://github.com/mnutt/libreoffice-rs", rev = "16532b3f0ded4b2e05296d114e2eacd91827ed23", default-features = false }
+lo_impress = { git = "https://github.com/mnutt/libreoffice-rs", rev = "16532b3f0ded4b2e05296d114e2eacd91827ed23", default-features = false, features = ["svg"] }
 
 [profile.release]
 opt-level = "z"

@@ -1,34 +1,31 @@
 #!/usr/bin/env python3
 """Copy dependency notices and the MPL-covered hatch source into the bundle."""
-import os
+import json
 from pathlib import Path
 import shutil
-import tomllib
+import subprocess
 
 root = Path(__file__).resolve().parent
 out = root / 'output/native-preview/licenses'
 if out.exists():
     shutil.rmtree(out)
 out.mkdir(parents=True, exist_ok=True)
-cargo = Path(os.environ.get('CARGO_HOME', Path.home() / '.cargo'))
+# Cargo resolves both vendored path dependencies and pinned Git checkouts.
+host = next(line.removeprefix('host: ') for line in subprocess.check_output(
+    ['rustc', '-vV'], text=True).splitlines() if line.startswith('host: '))
+metadata = json.loads(subprocess.check_output(
+    ['cargo', 'metadata', '--format-version', '1', '--locked', '--offline',
+     '--filter-platform', host], cwd=root))
+packages = metadata['packages']
+impress = Path(next(p['manifest_path'] for p in packages if p['name'] == 'lo_impress')).parent
+odf_workspace = impress.parent.parent
 notices = []
 licenses = {}
-for package in tomllib.loads((root / 'Cargo.lock').read_text())['package']:
-    name = f"{package['name']}-{package['version']}"
-    odf_workspace = root / 'vendor/libreoffice-rs-16532b3'
-    sources = [root / 'vendor' / name,
-               odf_workspace / 'crates' / package['name'],
-               *(cargo / 'registry/src').glob('*/' + name)]
-    source = next((p for p in sources if p.exists()), None)
-    if source is None:
-        continue  # Cargo.lock also includes dependencies for other platforms.
-    manifest = tomllib.loads((source / 'Cargo.toml').read_text())['package']
+for manifest in packages:
+    name = f"{manifest['name']}-{manifest['version']}"
+    source = Path(manifest['manifest_path']).parent
     license_dirs = [source]
     if source.parent == odf_workspace / 'crates':
-        inherited = tomllib.loads((odf_workspace / 'Cargo.toml').read_text())['workspace']['package']
-        for key in ('license', 'repository'):
-            if isinstance(manifest.get(key), dict) and manifest[key].get('workspace'):
-                manifest[key] = inherited[key]
         license_dirs.append(odf_workspace)
     notices.append(f"{name}: {manifest.get('license', 'see license file')} {manifest.get('repository', '')}")
     for file in (file for directory in license_dirs for file in directory.iterdir()):
@@ -37,7 +34,6 @@ for package in tomllib.loads((root / 'Cargo.lock').read_text())['package']:
             licenses.setdefault(content, []).append(f'{name}/{file.name}')
 # lo_impress ships third-party preset geometry and an MPL-licensed hatch table.
 # Their notices are nested under data/, outside Cargo's usual license locations.
-impress = odf_workspace / 'crates/lo_impress'
 for name in ['APACHE-POI-LICENSE', 'APACHE-POI-NOTICE', 'LIBREOFFICE-MPL-2.0']:
     file = impress / 'data' / name
     licenses.setdefault(file.read_text().strip(), []).append(f'lo_impress/data/{name}')

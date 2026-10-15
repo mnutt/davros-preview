@@ -273,7 +273,7 @@ harness are repository code, not additional dependency patches. See
 
 ## libreoffice-rs renderer
 
-The ODT/ODS/ODP, XLS/XLSX and PPT/PPTX renderers use the checksum-pinned
+The ODT/ODS/ODP, XLS/XLSX and PPT/PPTX renderers use the commit-pinned
 Davros fork at `16532b3f0ded4b2e05296d114e2eacd91827ed23`. Its `davros-fixes`
 branch contains the imported fixes as logical commits plus the XLSX and PPTX
 corpus work. No local patch is applied. The prefixed-XLSX regression fixtures
@@ -293,9 +293,9 @@ date/time values. The importer regression covers visible and hidden master field
 across multiple slides. Complex enhanced geometry and mixed-run typography remain
 open fidelity work.
 
-`sources.json` pins the source archive checksum; `prepare.py` stages extraction
-before replacing the vendor tree. `test.sh` runs the ODF library
-tests and generated ODF controls through the packaged binary, alongside all
+`Cargo.toml` pins the Git revision, recorded in `Cargo.lock`; Cargo manages
+the checkout in its Git cache. `prepare.py` only prepares the patched dependencies.
+`test.sh` runs the ODF library tests and generated ODF controls through the packaged binary, alongside all
 existing Office and sandbox checks. Runtime dependency notices include inherited
 workspace metadata and the upstream MIT license.
 

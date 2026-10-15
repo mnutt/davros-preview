@@ -11,6 +11,7 @@ import shutil
 import statistics
 import subprocess
 import sys
+import tomllib
 import xml.etree.ElementTree as ET
 
 HERE = Path(__file__).resolve().parent
@@ -272,8 +273,7 @@ def main():
     metadata = dict(created_utc=datetime.now(timezone.utc).isoformat(),
                     scope='ODF only' if args.odf_only else 'all formats',
                     native_generator_sha256=corpus.digest(Path(native_fixtures.__file__)),
-                    configured_renderer_source=next(source for source in json.loads((ROOT / 'sources.json').read_text())
-                                                    if source['name'].startswith('libreoffice-rs-')),
+                    configured_renderer_source=tomllib.loads((ROOT / 'Cargo.toml').read_text())['dependencies']['lo_impress'],
                     git_revision=subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
                     candidate_sha256=corpus.digest(candidate), candidate_bytes=candidate.stat().st_size,
                     davros_sha256=corpus.digest(bundle / 'davros-preview'), davros_bytes=(bundle / 'davros-preview').stat().st_size,

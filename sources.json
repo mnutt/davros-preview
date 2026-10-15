@@ -6,12 +6,5 @@
   {
     "name": "office_oxide-0.1.13",
     "sha256": "22582556784e5c9005e12e2c2e78c2959674ca082edf806d939fff4ffceca9de"
-  },
-  {
-    "name": "libreoffice-rs-16532b3",
-    "url": "https://codeload.github.com/mnutt/libreoffice-rs/tar.gz/16532b3f0ded4b2e05296d114e2eacd91827ed23",
-    "archive_root": "libreoffice-rs-16532b3f0ded4b2e05296d114e2eacd91827ed23",
-    "sha256": "369fc478293afd65160d676a4a5b335d810f2b0401c47cb110c75c61d65142e3",
-    "patch": false
   }
 ]
