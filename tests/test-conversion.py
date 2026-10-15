@@ -24,10 +24,10 @@ with tempfile.TemporaryDirectory(prefix='davros-preview-tests-') as tmp:
         pdf = scratch / 'preview.pdf'
         subprocess.run([binary, source, pdf], env=env, check=True, timeout=60)
         assert pdf.read_bytes().startswith(b'%PDF-'), source
-        # Legacy XLS preserves the fixture's narrow columns. Poppler's layout
-        # heuristics interleave adjacent cells; raw order tests text retention
-        # independently of the documented legacy layout limitations.
-        text_options = ['-raw'] if source.suffix == '.xls' else []
+        # Spreadsheet fixtures have narrow columns. Poppler's layout heuristics
+        # interleave adjacent cells (including XLSX with Ubuntu 22.04's Poppler
+        # 22.02); raw order tests text retention independently of those heuristics.
+        text_options = ['-raw'] if source.suffix in ('.xls', '.xlsx') else []
         text = subprocess.check_output(['pdftotext', *text_options, str(pdf), '-'], text=True)
         texts[source.name] = text
         assert 'Selectablepreviewtext' in re.sub(r'\s', '', text), source
@@ -35,7 +35,7 @@ with tempfile.TemporaryDirectory(prefix='davros-preview-tests-') as tmp:
         if source.suffix in ('.xls', '.xlsx'):
             assert '12.5%' in text and '13.0%' not in text, source
             assert '$12.50' in text and '$12.500' not in text, source
-        if source.suffix == '.xls':
+        if source.suffix in ('.xls', '.xlsx'):
             compact = re.sub(r'\s', '', text)
             for row in range(1, 206):
                 assert f'Selectablepreviewtext{row}12.5%' in compact, row
