@@ -108,7 +108,15 @@ with tempfile.TemporaryDirectory(prefix='davros-landlock-') as tmp:
         assert result.returncode == 0, (label, result.stderr)
         report = json.loads(result.stdout)
         assert report['features'][feature]['enabled'] == expected, (label, report)
-        if not expected:
+        # Optional rulesets are only attempted on a supporting ABI. On older
+        # kernels the injected denial is never reached, so the feature should
+        # keep its baseline "requires ..." detail without emitting a warning.
+        minimum_abi = {'denied_network': 4, 'denied_scoping': 6}.get(label)
+        if minimum_abi is not None and (baseline_report['landlock_abi'] or 0) < minimum_abi:
+            assert report['features'][feature] == baseline_features[feature], (label, report)
+            assert report['features'][feature]['detail'].startswith('requires '), (label, report)
+            assert feature not in result.stderr, (label, result.stderr)
+        elif not expected:
             warning = ('Landlock filesystem isolation unavailable'
                        if feature == 'filesystem_isolation' else feature)
             assert warning in result.stderr, (label, result.stderr)
