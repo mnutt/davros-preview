@@ -1749,3 +1749,28 @@
      }
 
      /// `CT_Sheets` requires at least one `sheet`.
+--- a/src/core/editable.rs
++++ b/src/core/editable.rs
+@@ -112,7 +112,11 @@
+     /// Write the package to any `Write + Seek` destination.
+     pub fn write_to<W: Write + Seek>(&self, writer: W) -> Result<()> {
+         let mut zip = ZipWriter::new(writer);
+-        let options = SimpleFileOptions::default().compression_method(CompressionMethod::Deflated);
++        // File options may default to the current time when zip's time feature
++        // is enabled. Use the ZIP epoch so unchanged saves remain identical.
++        let options = SimpleFileOptions::default()
++            .compression_method(CompressionMethod::Deflated)
++            .last_modified_time(zip::DateTime::default());
+
+         // Sorted: parts and part_rels are HashMaps, so iterating them directly
+         // produced a different ZIP entry order on every save. Saving an
+@@ -403,6 +407,9 @@
+         };
+
+         let first = save();
++        // ZIP timestamps have two-second resolution. Cross a timestamp tick
++        // so wall-clock defaults cannot make this test pass by coincidence.
++        std::thread::sleep(std::time::Duration::from_millis(2100));
+         for _ in 0..15 {
+             assert_eq!(first, save(), "the edit path is not byte-deterministic");
+         }

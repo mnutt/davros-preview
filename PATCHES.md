@@ -304,6 +304,15 @@ check retained source text without `Slide 1`. Removing fabricated words can lowe
 word-recall scores that accidentally counted them as matches. This does not fix
 shape coordinates, stacking order, master inheritance or extra master-text slides.
 
+### O12. Keep editable package ZIP timestamps deterministic
+
+`src/core/editable.rs` sets every saved ZIP entry's timestamp to the ZIP epoch
+(1980-01-01). The ZIP writer's default can use the current time when its `time`
+feature is enabled, making unchanged saves differ even with sorted entries.
+
+Validation: `test_saving_the_same_package_twice_produces_the_same_bytes` now waits
+across ZIP's two-second timestamp resolution before comparing repeated saves.
+
 ## Upgrading and validating
 
 1. Compare the new upstream implementation against each numbered change above.
