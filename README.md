@@ -43,7 +43,7 @@ the checked-in lockfile. Dependencies are downloaded on the first build.
 coverage and limitations, and how to reassess it when upgrading upstream crates.
 
 `output/native-preview/` contains the runtime bundle. `dist/` contains
-`davros-preview-v0.3.0-linux-amd64.tar.gz` and its `.sha256` file. The archive
+`davros-preview-v0.3.3-linux-amd64.tar.gz` and its `.sha256` file. The archive
 contains a single `native-preview/` directory, matching Davros's existing output
 layout. Build dependencies and test executables are not included.
 
@@ -71,8 +71,12 @@ subprocess on cancellation (Davros uses 60 seconds).
 
 Before parsing, the executable attempts each available protection independently:
 Linux Landlock, inherited-descriptor cleanup, disabled process dumping,
-no-new-privileges, and resource limits. Unavailable protections produce named
-warnings on stderr; conversion continues with the remaining protections.
+no-new-privileges, and resource limits. Stderr reports the enforced Landlock ABI
+(e.g. `Using Landlock ABI 6 for preview`), or explains why Landlock filesystem
+isolation is unavailable. Missing capabilities requiring newer ABIs are expected
+and appear in `--check-sandbox` JSON rather than individual warnings. Unexpected
+hardening failures still produce named warnings; conversion continues with the
+remaining protections.
 Landlock ABI 1 provides basic filesystem restrictions; later ABIs add truncation,
 device ioctl, TCP, Unix socket, signal, and UDP restrictions. A successful ABI
 query alone is not treated as successful enforcement.
@@ -120,7 +124,7 @@ also bounds recursive XML expansion and populated ODS cells (100,000 per sheet).
 ## Releases
 
 Push this project to its GitHub repository, then push a version tag matching
-`Cargo.toml`, for example `v0.3.0`. The workflow builds and tests before publishing
+`Cargo.toml`, for example `v0.3.3`. The workflow builds and tests before publishing
 the archive and SHA-256 file. Branches and pull requests also build/test and
 upload workflow artifacts, without publishing a release.
 

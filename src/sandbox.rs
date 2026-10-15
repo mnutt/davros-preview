@@ -77,7 +77,11 @@ impl SecurityReport {
         let (enabled, detail) = match result {
             Ok(detail) => (true, detail),
             Err(detail) => {
-                eprintln!("Preview security unavailable: {name}: {detail}");
+                // Missing newer ABI capabilities are expected, and remain in
+                // the structured report. Keep unexpected hardening failures visible.
+                if name != "filesystem_isolation" && !detail.starts_with("requires ") {
+                    eprintln!("Preview security unavailable: {name}: {detail}");
+                }
                 (false, detail)
             }
         };
@@ -367,6 +371,17 @@ pub fn enter(input: &Path, output: &Path) -> Result<SecurityReport, Box<dyn std:
         Err(e) => Err(unavailable("Landlock ABI query", e)),
     };
     let fs_active = fs_result.is_ok();
+    match &fs_result {
+        Ok(_) => eprintln!(
+            "Using Landlock ABI {} for preview",
+            report
+                .landlock_abi
+                .expect("active filesystem isolation has an ABI")
+        ),
+        Err(reason) => {
+            eprintln!("Landlock filesystem isolation unavailable; continuing preview: {reason}")
+        }
+    }
     report.record("filesystem_isolation", fs_result);
     let abi = report.landlock_abi;
     for (name, minimum) in [

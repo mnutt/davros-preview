@@ -9,8 +9,10 @@ Treat every uploaded document, embedded image/font, relationship, and generated
 PDF as untrusted. The converter is a disposable subprocess. The launcher, input
 snapshot, font bundle, and private job directory are trusted. Do not run it as
 root or give it credentials. Conversion continues when optional kernel protections
-are unavailable, and reports each missing protection on stderr. The preflight
-JSON describes protections applied to its own process, not guarantees about a
+are unavailable. Stderr summarizes active Landlock filesystem isolation or its
+failure reason and warns about unexpected hardening failures. Expected absence
+of newer ABI capabilities is recorded in the preflight JSON. That JSON describes
+protections applied to its own process, not guarantees about a
 future process or the entire host.
 
 Landlock supplements the enclosing sandbox. When filesystem isolation is absent,

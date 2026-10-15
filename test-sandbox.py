@@ -90,7 +90,13 @@ with tempfile.TemporaryDirectory(prefix='davros-landlock-') as tmp:
         ('denied_limits', prlimit_nr, errno.EPERM, None, None, 'address_space_limit', False),
     ]
     baseline = subprocess.run(args + ['probe'], env=env, capture_output=True, text=True, check=True, timeout=30)
-    baseline_features = json.loads(baseline.stdout)['features']
+    baseline_report = json.loads(baseline.stdout)
+    baseline_features = baseline_report['features']
+    if baseline_features['filesystem_isolation']['enabled']:
+        assert f"Using Landlock ABI {baseline_report['landlock_abi']} for preview" in baseline.stderr
+    for feature, status in baseline_features.items():
+        if not status['enabled'] and status['detail'].startswith('requires '):
+            assert feature not in baseline.stderr, baseline.stderr
     for label, syscall, error, arg, equals, feature, expected in cases:
         with (root / 'secret').open() as secret:
             os.dup2(secret.fileno(), 198, inheritable=True)
@@ -103,7 +109,9 @@ with tempfile.TemporaryDirectory(prefix='davros-landlock-') as tmp:
         report = json.loads(result.stdout)
         assert report['features'][feature]['enabled'] == expected, (label, report)
         if not expected:
-            assert feature in result.stderr, (label, result.stderr)
+            warning = ('Landlock filesystem isolation unavailable'
+                       if feature == 'filesystem_isolation' else feature)
+            assert warning in result.stderr, (label, result.stderr)
         if label in ('denied_network', 'denied_scoping'):
             assert report['features']['filesystem_isolation']['enabled'] == baseline_features['filesystem_isolation']['enabled']
         if 'close_range' in label:
@@ -154,7 +162,7 @@ with tempfile.TemporaryDirectory(prefix='davros-landlock-') as tmp:
             preexec_fn=filter_setup(444, errno.EPERM), capture_output=True, text=True, timeout=60)
         assert converted.returncode == 0, converted.stderr
         assert output.read_bytes().startswith(b'%PDF-')
-        assert 'filesystem_isolation' in converted.stderr
+        assert 'Landlock filesystem isolation unavailable' in converted.stderr
         output.unlink()
         output.symlink_to(root / 'secret')
         refused = subprocess.run([converter, source, output], env=runtime_env,
