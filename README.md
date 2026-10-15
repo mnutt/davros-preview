@@ -52,7 +52,7 @@ the checked-in lockfile. Dependencies are downloaded on the first build.
 coverage and limitations, and how to reassess it when upgrading upstream crates.
 
 `output/native-preview/` contains the runtime bundle. `dist/` contains
-`davros-preview-v0.3.4-linux-amd64.tar.gz` and its `.sha256` file. The archive
+`davros-preview-v0.4.0-linux-amd64.tar.gz` and its `.sha256` file. The archive
 contains a single `native-preview/` directory, matching Davros's existing output
 layout. Build dependencies and test executables are not included.
 
@@ -151,7 +151,7 @@ also bounds recursive XML expansion and populated ODS cells (100,000 per sheet).
 ## Releases
 
 Push this project to its GitHub repository, then push a version tag matching
-`Cargo.toml`, for example `v0.3.4`. The workflow builds and tests before publishing
+`Cargo.toml`, for example `v0.4.0`. The workflow builds and tests before publishing
 the archive and SHA-256 file. Branches and pull requests also build/test and
 upload workflow artifacts, without publishing a release.
 
